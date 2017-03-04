@@ -12,4 +12,4 @@ rm mcifar10/*.pyc
 sed -i '' 's/from tensorflow.models.image.cifar10/from mcifar10/g'  mcifar10/*.py
 
 # Finally test running it...
-export PYTHONPATH=mcifar10 ; python -m mcifar10.cifar10_train 
+export PYTHONPATH=mcifar10 ; python -m mcifar10.cifar10_train
