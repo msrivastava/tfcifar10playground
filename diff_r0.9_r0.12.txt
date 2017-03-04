@@ -1,0 +1,120 @@
+********* diff cifar10_r0.9/cifar10.py cifar10_r0.12/cifar10.py
+55a56,57
+> tf.app.flags.DEFINE_boolean('use_fp16', False,
+>                             """Train the model using fp16.""")
+82c84
+<   Creates a summary that measure the sparsity of activations.
+---
+>   Creates a summary that measures the sparsity of activations.
+108c110,111
+<     var = tf.get_variable(name, shape, initializer=initializer)
+---
+>     dtype = tf.float16 if FLAGS.use_fp16 else tf.float32
+>     var = tf.get_variable(name, shape, initializer=initializer, dtype=dtype)
+128,129c131,135
+<   var = _variable_on_cpu(name, shape,
+<                          tf.truncated_normal_initializer(stddev=stddev))
+---
+>   dtype = tf.float16 if FLAGS.use_fp16 else tf.float32
+>   var = _variable_on_cpu(
+>       name,
+>       shape,
+>       tf.truncated_normal_initializer(stddev=stddev, dtype=dtype))
+149,150c155,160
+<   return cifar10_input.distorted_inputs(data_dir=data_dir,
+<                                         batch_size=FLAGS.batch_size)
+---
+>   images, labels = cifar10_input.distorted_inputs(data_dir=data_dir,
+>                                                   batch_size=FLAGS.batch_size)
+>   if FLAGS.use_fp16:
+>     images = tf.cast(images, tf.float16)
+>     labels = tf.cast(labels, tf.float16)
+>   return images, labels
+169,170c179,185
+<   return cifar10_input.inputs(eval_data=eval_data, data_dir=data_dir,
+<                               batch_size=FLAGS.batch_size)
+---
+>   images, labels = cifar10_input.inputs(eval_data=eval_data,
+>                                         data_dir=data_dir,
+>                                         batch_size=FLAGS.batch_size)
+>   if FLAGS.use_fp16:
+>     images = tf.cast(images, tf.float16)
+>     labels = tf.cast(labels, tf.float16)
+>   return images, labels
+189,190c204,207
+<     kernel = _variable_with_weight_decay('weights', shape=[5, 5, 3, 64],
+<                                          stddev=1e-4, wd=0.0)
+---
+>     kernel = _variable_with_weight_decay('weights',
+>                                          shape=[5, 5, 3, 64],
+>                                          stddev=5e-2,
+>                                          wd=0.0)
+193,194c210,211
+<     bias = tf.nn.bias_add(conv, biases)
+<     conv1 = tf.nn.relu(bias, name=scope.name)
+---
+>     pre_activation = tf.nn.bias_add(conv, biases)
+>     conv1 = tf.nn.relu(pre_activation, name=scope.name)
+206,207c223,226
+<     kernel = _variable_with_weight_decay('weights', shape=[5, 5, 64, 64],
+<                                          stddev=1e-4, wd=0.0)
+---
+>     kernel = _variable_with_weight_decay('weights',
+>                                          shape=[5, 5, 64, 64],
+>                                          stddev=5e-2,
+>                                          wd=0.0)
+210,211c229,230
+<     bias = tf.nn.bias_add(conv, biases)
+<     conv2 = tf.nn.relu(bias, name=scope.name)
+---
+>     pre_activation = tf.nn.bias_add(conv, biases)
+>     conv2 = tf.nn.relu(pre_activation, name=scope.name)
+240c259,262
+<   # softmax, i.e. softmax(WX + b)
+---
+>   # linear layer(WX + b),
+>   # We don't apply softmax here because 
+>   # tf.nn.sparse_softmax_cross_entropy_with_logits accepts the unscaled logits 
+>   # and performs the softmax internally for efficiency.
+375c397,398
+<     tarfile.open(filepath, 'r:gz').extractall(dest_directory)
+---
+>   
+>   tarfile.open(filepath, 'r:gz').extractall(dest_directory)
+
+********* diff cifar10_r0.9/cifar10_input.py cifar10_r0.12/cifar10_input.py
+182c182
+<   float_image = tf.image.per_image_whitening(distorted_image)
+---
+>   float_image = tf.image.per_image_standardization(distorted_image)
+237c237
+<   float_image = tf.image.per_image_whitening(resized_image)
+---
+>   float_image = tf.image.per_image_standardization(resized_image)
+
+********* diff cifar10_r0.9/cifar10_multi_gpu_train.py cifar10_r0.12/cifar10_multi_gpu_train.py
+90,93d89
+<   # Compute the moving average of all individual losses and the total loss.
+<   loss_averages = tf.train.ExponentialMovingAverage(0.9, name='avg')
+<   loss_averages_op = loss_averages.apply(losses + [total_loss])
+< 
+100,103c96
+<     # Name each loss as '(raw)' and name the moving average version of the loss
+<     # as the original loss name.
+<     tf.scalar_summary(loss_name +' (raw)', l)
+<     tf.scalar_summary(loss_name, loss_averages.average(l))
+---
+>     tf.scalar_summary(loss_name, l)
+105,106d97
+<   with tf.control_dependencies([loss_averages_op]):
+<     total_loss = tf.identity(total_loss)
+229c220
+<     init = tf.initialize_all_variables()
+---
+>     init = tf.global_variables_initializer()
+
+********* diff cifar10_r0.9/cifar10_train.py cifar10_r0.12/cifar10_train.py
+86c86
+<     init = tf.initialize_all_variables()
+---
+>     init = tf.global_variables_initializer()
