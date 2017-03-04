@@ -56,6 +56,8 @@ tf.app.flags.DEFINE_string('data_dir', '/tmp/mcifar10_data',
                            """Path to the CIFAR-10 data directory.""")
 tf.app.flags.DEFINE_boolean('use_fp16', False,
                             """Train the model using fp16.""")
+tf.app.flags.DEFINE_boolean('custom_overrides', True,
+                            """Custom overrides for certain TF values.""")
 
 # Constants describing the training process.
 tf.app.flags.DEFINE_float('moving_average_decay', 0.9999 ,
@@ -199,7 +201,7 @@ def inference(images):
   with tf.variable_scope('conv1') as scope:
     kernel = _variable_with_weight_decay('weights',
                                          shape=[5, 5, 3, 64],
-                                         stddev=5e-2,
+                                         stddev=1e-4 if FLAGS.custom_overrides else 5e-2, #Note: TF code now uses 5e-2
                                          wd=0.0)
     conv = tf.nn.conv2d(images, kernel, [1, 1, 1, 1], padding='SAME')
     biases = _variable_on_cpu('biases', [64], tf.constant_initializer(0.0))
@@ -218,7 +220,7 @@ def inference(images):
   with tf.variable_scope('conv2') as scope:
     kernel = _variable_with_weight_decay('weights',
                                          shape=[5, 5, 64, 64],
-                                         stddev=5e-2,
+                                         stddev=1e-4 if FLAGS.custom_overrides else 5e-2, #Note: TF code now uses 5e-2
                                          wd=0.0)
     conv = tf.nn.conv2d(norm1, kernel, [1, 1, 1, 1], padding='SAME')
     biases = _variable_on_cpu('biases', [64], tf.constant_initializer(0.1))
