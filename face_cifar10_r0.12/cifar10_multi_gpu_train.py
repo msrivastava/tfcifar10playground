@@ -54,13 +54,18 @@ FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_string('train_dir', '/tmp/mcifar10_train',
                            """Directory where to write event logs """
                            """and checkpoint.""")
+tf.app.flags.DEFINE_string('checkpoint_dir', '/tmp/mcifar10_train',
+                           """Directory where to read model checkpoints.""")
 tf.app.flags.DEFINE_integer('max_steps', 1000000,
                             """Number of batches to run.""")
 tf.app.flags.DEFINE_integer('num_gpus', 1,
                             """How many GPUs to use.""")
 tf.app.flags.DEFINE_boolean('log_device_placement', False,
                             """Whether to log device placement.""")
-
+tf.app.flags.DEFINE_boolean('retrain', False,
+                            """Whether to retrain.""")
+tf.app.flags.DEFINE_integer('retrain_count', 1,
+                            """Numer of final layers to retrains [1 or 2].""")
 
 def tower_loss(scope):
   """Calculate the total loss on a single tower running the CIFAR model.
@@ -146,15 +151,15 @@ def train():
         initializer=tf.constant_initializer(0), trainable=False)
 
     # Calculate the learning rate schedule.
-    num_batches_per_epoch = (cifar10.NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN /
+    num_batches_per_epoch = (FLAGS.num_examples_per_epoch_for_train /
                              FLAGS.batch_size)
-    decay_steps = int(num_batches_per_epoch * cifar10.NUM_EPOCHS_PER_DECAY)
+    decay_steps = int(num_batches_per_epoch * FLAGS.num_epochs_per_decay)
 
     # Decay the learning rate exponentially based on the number of steps.
-    lr = tf.train.exponential_decay(cifar10.INITIAL_LEARNING_RATE,
+    lr = tf.train.exponential_decay(FLAGS.initial_learning_rate,
                                     global_step,
                                     decay_steps,
-                                    cifar10.LEARNING_RATE_DECAY_FACTOR,
+                                    FLAGS.learning_rate_decay_factor,
                                     staircase=True)
 
     # Create an optimizer that performs gradient descent.
@@ -261,10 +266,21 @@ def train():
 
 def main(argv=None):  # pylint: disable=unused-argument
   cifar10.maybe_download_and_extract()
-  if tf.gfile.Exists(FLAGS.train_dir):
-    tf.gfile.DeleteRecursively(FLAGS.train_dir)
-  tf.gfile.MakeDirs(FLAGS.train_dir)
-  train()
+  if FLAGS.retrain_count!=1: FLAGS.retrain_count=2
+  if FLAGS.retrain:
+    print ("Will only retrain the final %d layer(s)."%(FLAGS.retrain_count))
+    if FLAGS.train_dir[-5:]=='train' and FLAGS.train_dir[-7:]!='train':
+      FLAGS.train_dir=FLAGS.train_dir[0:-5]+'retrain'
+    if tf.gfile.Exists(FLAGS.train_dir):
+      tf.gfile.DeleteRecursively(FLAGS.train_dir)
+    tf.gfile.MakeDirs(FLAGS.train_dir)
+    train(True,FLAGS.retrain_count)
+  else:
+    print ("Will train from scratch")
+    if tf.gfile.Exists(FLAGS.train_dir):
+      tf.gfile.DeleteRecursively(FLAGS.train_dir)
+    tf.gfile.MakeDirs(FLAGS.train_dir)
+    train()
 
 
 if __name__ == '__main__':

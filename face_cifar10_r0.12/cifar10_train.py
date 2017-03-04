@@ -10,7 +10,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.     
+# limitations under the License.
 
 # FOR NEFESH COMPUTER
 # ==============================================================================
@@ -106,7 +106,7 @@ def train(retrain=False,retrain_count=1):
         for v in tf.trainable_variables(): print(v.name)
         print("MOVING AVERAGES =============================================================================")
         for v in tf.moving_average_variables(): print(v.name)
-      variable_averages = tf.train.ExponentialMovingAverage(cifar10.MOVING_AVERAGE_DECAY)
+      variable_averages = tf.train.ExponentialMovingAverage(FLAGS.moving_average_decay)
       variables_to_restore = variable_averages.variables_to_restore()
       if FLAGS.retrain_count==1:
         variables_to_restore = [v for v in tf.global_variables() if v.name[0:14]!="softmax_linear"]

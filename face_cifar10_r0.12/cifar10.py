@@ -10,7 +10,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.    
+# limitations under the License.
 # For NEFESH COMPUTER
 # ==============================================================================
 
@@ -57,30 +57,20 @@ tf.app.flags.DEFINE_string('data_dir', '/tmp/mcifar10_data',
 tf.app.flags.DEFINE_boolean('use_fp16', False,
                             """Train the model using fp16.""")
 
-# Global constants describing the CIFAR-10 data set.
-IMAGE_SIZE = cifar10_input.IMAGE_SIZE
-NUM_CLASSES = cifar10_input.NUM_CLASSES
-NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = cifar10_input.NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN
-NUM_EXAMPLES_PER_EPOCH_FOR_EVAL = cifar10_input.NUM_EXAMPLES_PER_EPOCH_FOR_EVAL
-TRAIN_FILE = cifar10_input.TRAIN_FILE
-EVAL_FILE = cifar10_input.EVAL_FILE
-
 # Constants describing the training process.
-MOVING_AVERAGE_DECAY = 0.9999     # The decay to use for the moving average.
-NUM_EPOCHS_PER_DECAY = 350.0      # Epochs after which learning rate decays.
-LEARNING_RATE_DECAY_FACTOR = 0.1  # Learning rate decay factor.
-INITIAL_LEARNING_RATE = 0.01 #0.1       # Initial learning rate.
+tf.app.flags.DEFINE_float('moving_average_decay', 0.9999 ,
+                            """The decay to use for the moving average.""")
+tf.app.flags.DEFINE_float('num_epochs_per_decay', 350.0 ,
+                            """Epochs after which learning rate decays.""")
+tf.app.flags.DEFINE_float('learning_rate_decay_factor', 0.1 ,
+                            """Learning rate decay factor.""")
+tf.app.flags.DEFINE_float('initial_learning_rate', 0.01 ,
+                            """Initial learning rate.""")
 
 # If a model is trained with multiple GPUs, prefix all Op names with tower_name
 # to differentiate the operations. Note that this prefix is removed from the
 # names of the summaries when visualizing a model.
 TOWER_NAME = 'tower'
-
-#DATA_URL = 'http://www.cs.toronto.edu/~kriz/cifar-10-binary.tar.gz'
-#DATA_URL = 'https://dl.dropboxusercontent.com/s/5ic8b62y7a97aow/Classification_Pi_Noise.zip'
-#DATA_URL = 'https://dl.dropboxusercontent.com/s/3i2da52ktt4l9j0/Classification_Pi_Noise_Nc.zip'
-DATA_URL = cifar10_input.DATA_URL
-DATA_FILE_ROOT = cifar10_input.DATA_FILE_ROOT
 
 def _activation_summary(x):
   """Helper to create summaries for activations.
@@ -148,7 +138,7 @@ def distorted_inputs():
   """Construct distorted input for CIFAR training using the Reader ops.
 
   Returns:
-    images: Images. 4D tensor of [batch_size, IMAGE_SIZE, IMAGE_SIZE, 3] size.
+    images: Images. 4D tensor of [batch_size, FLAGS.image_size, FLAGS.image_size, 3] size.
     labels: Labels. 1D tensor of [batch_size] size.
 
   Raises:
@@ -156,7 +146,7 @@ def distorted_inputs():
   """
   if not FLAGS.data_dir:
     raise ValueError('Please supply a data_dir')
-  data_dir = os.path.join(FLAGS.data_dir, DATA_FILE_ROOT)
+  data_dir = os.path.join(FLAGS.data_dir, cifar10_input.data_file_root())
   images, labels = cifar10_input.distorted_inputs(data_dir=data_dir,
                                                   batch_size=FLAGS.batch_size)
   if FLAGS.use_fp16:
@@ -172,7 +162,7 @@ def inputs(eval_data):
     eval_data: bool, indicating if one should use the train or eval data set.
 
   Returns:
-    images: Images. 4D tensor of [batch_size, IMAGE_SIZE, IMAGE_SIZE, 3] size.
+    images: Images. 4D tensor of [batch_size, FLAGS.image_size, FLAGS.image_size, 3] size.
     labels: Labels. 1D tensor of [batch_size] size.
 
   Raises:
@@ -180,7 +170,7 @@ def inputs(eval_data):
   """
   if not FLAGS.data_dir:
     raise ValueError('Please supply a data_dir')
-  data_dir = os.path.join(FLAGS.data_dir, DATA_FILE_ROOT)
+  data_dir = os.path.join(FLAGS.data_dir, cifar10_input.data_file_root())
   images, labels = cifar10_input.inputs(eval_data=eval_data,
                                         data_dir=data_dir,
                                         batch_size=FLAGS.batch_size)
@@ -204,8 +194,8 @@ def inference(images):
   # If we only ran this model on a single GPU, we could simplify this function
   # by replacing all instances of tf.get_variable() with tf.Variable().
   #
-  # conv1 
-#V1 Measurements: 
+  # conv1
+#V1 Measurements:
   with tf.variable_scope('conv1') as scope:
     kernel = _variable_with_weight_decay('weights',
                                          shape=[5, 5, 3, 64],
@@ -263,13 +253,13 @@ def inference(images):
     _activation_summary(local4)
 
   # linear layer(WX + b),
-  # We don't apply softmax here because 
-  # tf.nn.sparse_softmax_cross_entropy_with_logits accepts the unscaled logits 
+  # We don't apply softmax here because
+  # tf.nn.sparse_softmax_cross_entropy_with_logits accepts the unscaled logits
   # and performs the softmax internally for efficiency.
   with tf.variable_scope('softmax_linear') as scope:
-    weights = _variable_with_weight_decay('weights', [192, NUM_CLASSES],
+    weights = _variable_with_weight_decay('weights', [192, FLAGS.num_classes],
                                           stddev=1/192.0, wd=0.0)
-    biases = _variable_on_cpu('biases', [NUM_CLASSES],
+    biases = _variable_on_cpu('biases', [FLAGS.num_classes],
                               tf.constant_initializer(0.0))
     softmax_linear = tf.add(tf.matmul(local4, weights), biases, name=scope.name)
     _activation_summary(softmax_linear)
@@ -342,14 +332,14 @@ def train(total_loss, global_step, vars_to_not_train=None):
     train_op: op for training.
   """
   # Variables that affect learning rate.
-  num_batches_per_epoch = NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN / FLAGS.batch_size
-  decay_steps = int(num_batches_per_epoch * NUM_EPOCHS_PER_DECAY)
+  num_batches_per_epoch = FLAGS.num_examples_per_epoch_for_train / FLAGS.batch_size
+  decay_steps = int(num_batches_per_epoch * FLAGS.num_epochs_per_decay)
 
   # Decay the learning rate exponentially based on the number of steps.
-  lr = tf.train.exponential_decay(INITIAL_LEARNING_RATE,
+  lr = tf.train.exponential_decay(FLAGS.initial_learning_rate,
                                   global_step,
                                   decay_steps,
-                                  LEARNING_RATE_DECAY_FACTOR,
+                                  FLAGS.learning_rate_decay_factor,
                                   staircase=True)
   tf.summary.scalar('learning_rate', lr)
 
@@ -392,7 +382,7 @@ def train(total_loss, global_step, vars_to_not_train=None):
 
   # Track the moving averages of all trainable variables.
   variable_averages = tf.train.ExponentialMovingAverage(
-      MOVING_AVERAGE_DECAY, global_step)
+      FLAGS.moving_average_decay, global_step)
   variables_averages_op = variable_averages.apply(tf.trainable_variables())
 
   with tf.control_dependencies([apply_gradient_op, variables_averages_op]):
@@ -407,14 +397,14 @@ def maybe_download_and_extract():
   dest_directory = FLAGS.data_dir
   if not os.path.exists(dest_directory):
     os.makedirs(dest_directory)
-  filename = DATA_URL.split('/')[-1]
+  filename = FLAGS.data_url.split('/')[-1]
   filepath = os.path.join(dest_directory, filename)
   if not os.path.exists(filepath):
     def _progress(count, block_size, total_size):
       sys.stdout.write('\r>> Downloading %s %.1f%%' % (filename,
           float(count * block_size) / float(total_size) * 100.0))
       sys.stdout.flush()
-    filepath, _ = urllib.request.urlretrieve(DATA_URL, filepath, _progress)
+    filepath, _ = urllib.request.urlretrieve(FLAGS.data_url, filepath, _progress)
     print()
     statinfo = os.stat(filepath)
     print('Successfully downloaded', filename, statinfo.st_size, 'bytes.')

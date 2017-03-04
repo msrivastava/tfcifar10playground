@@ -75,7 +75,7 @@ def calculate_precision(model_predictions, correct_predictions):
 			#print("Index: "+str(i)+" Hits: "+str(hits)+" False Alarm: "+str(false_alarms))
 			amount += 1
 	if(amount == 0):
-		return 0 
+		return 0
 	return sum_avg/amount
 
 
@@ -124,7 +124,7 @@ def calculate_false_positives(incorrect_predictions, needed_predictions):
 			amount += 1
 	if(amount == 0):
 		return 0
-	return sum_avg/amount   
+	return sum_avg/amount
 
 
 def eval_once(saver, summary_writer, top_k_op, summary_op, logits, labels, new_top_values_op):
@@ -160,17 +160,17 @@ def eval_once(saver, summary_writer, top_k_op, summary_op, logits, labels, new_t
       num_iter = int(math.ceil(FLAGS.num_examples / FLAGS.batch_size))
       true_count = 0  # Counts the number of correct predictions.
       total_sample_count = num_iter * FLAGS.batch_size
-      new_predicts_for_each_label = [0 for i in range(cifar10.NUM_CLASSES)]
-      new_correct_predicts_for_each_label = [0 for i in range(cifar10.NUM_CLASSES)]
-      new_incorrect_predicts_for_each_label = [0 for i in range(cifar10.NUM_CLASSES)]
-      new_actual_amount_per_label = [0 for i in range(cifar10.NUM_CLASSES)]
+      new_predicts_for_each_label = [0 for i in range(FLAGS.num_classes)]
+      new_correct_predicts_for_each_label = [0 for i in range(FLAGS.num_classes)]
+      new_incorrect_predicts_for_each_label = [0 for i in range(FLAGS.num_classes)]
+      new_actual_amount_per_label = [0 for i in range(FLAGS.num_classes)]
       step = 0
       while step < num_iter and not coord.should_stop():
         [actual_labels, new_logits, predictions, new_values, new_indices] = sess.run([labels, logits, top_k_op, new_top_values_op[0], new_top_values_op[1]])
         #print(actual_labels)
         #print(predictions)
         #print("new indices: ")
-        #print(new_indices)  
+        #print(new_indices)
         true_count += np.sum(predictions)
         for i in range(FLAGS.batch_size):
         	predict_class = new_indices[i][0]
@@ -180,12 +180,12 @@ def eval_once(saver, summary_writer, top_k_op, summary_op, logits, labels, new_t
 	        if(predictions[i]):  #THIS SHOULD ONLY OCCUR WHEN "Class with top value" EQUALS "Actual Class Label"
 	        	new_correct_predicts_for_each_label[predict_class] += 1
 	        else:
-	        	new_incorrect_predicts_for_each_label[predict_class] += 1   	                 
+	        	new_incorrect_predicts_for_each_label[predict_class] += 1
         step += 1
         print(step)
         print(coord.should_stop())
       #print(new_predicts_for_each_label)
-      #print(new_correct_predicts_for_each_label) 
+      #print(new_correct_predicts_for_each_label)
       print("Megha's Precision: ")
       print(calculate_precision(new_predicts_for_each_label, new_correct_predicts_for_each_label))
       print("Megha's Recall/ TRUE POSITIVE Rate: ")
@@ -193,7 +193,7 @@ def eval_once(saver, summary_writer, top_k_op, summary_op, logits, labels, new_t
       print("Megha's False Positive Rate: ")
       print(calculate_false_positives(new_incorrect_predicts_for_each_label, new_actual_amount_per_label))
 
-      # Compute precision @ 1.  
+      # Compute precision @ 1.
       #print(logits[0,:].eval())
       #print(labels[1].eval())
       precision = true_count / total_sample_count
@@ -226,7 +226,7 @@ def evaluate():
 
     # Restore the moving average version of the learned variables for eval.
     variable_averages = tf.train.ExponentialMovingAverage(
-        cifar10.MOVING_AVERAGE_DECAY)
+        FLAGS.moving_average_decay)
     variables_to_restore = variable_averages.variables_to_restore()
     saver = tf.train.Saver(variables_to_restore)
 

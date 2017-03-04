@@ -10,7 +10,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License. 
+# limitations under the License.
 # Megha: FOR NEFESH COMP
 # ==============================================================================
 
@@ -25,25 +25,35 @@ import os
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
 
+FLAGS = tf.app.flags.FLAGS
+
 # DATA SET CONFIGURATION
 
 # Process images of this size. Note that this differs from the original CIFAR
 # image size of 32 x 32. If one alters this number, then the entire model
 # architecture will change and any model would need to be retrained.
-IMAGE_SIZE = 140
+tf.app.flags.DEFINE_integer('image_size', 140,
+                            """Size of image to be processed.""")
 
 # Global constants describing the CIFAR-10 data set.
-#DATA_URL = 'https://dl.dropboxusercontent.com/s/5ic8b62y7a97aow/Classification_Pi_Noise.zip'
-DATA_URL = 'https://dl.dropbox.com/s/u1dn6z5j8u79w71/Classification_All_Blur_140v1.zip'
-DATA_FILE_ROOT = DATA_URL.split('/')[-1][0:-4]
-TRAIN_FILE = 'all_train.bin'
-EVAL_FILE = 'all_test13.bin'
-NUM_CLASSES = 101
-NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 1212
-NUM_EXAMPLES_PER_EPOCH_FOR_EVAL = 303
-NUM_BATCHES = 2
+tf.app.flags.DEFINE_string('data_url',
+                            'https://dl.dropbox.com/s/u1dn6z5j8u79w71/Classification_All_Blur_140v1.zip',
+                            """URL to download data from.""")
+tf.app.flags.DEFINE_string('train_file', 'all_train.bin',
+                            """Training filename.""")
+tf.app.flags.DEFINE_string('eval_file', 'all_test13.bin',
+                            """Evaluation filename..""")
+tf.app.flags.DEFINE_integer('num_classes', 101,
+                            """Number of classes.""")
+tf.app.flags.DEFINE_integer('num_examples_per_epoch_for_train', 1212,
+                            """Number of examples per epoch for training.""")
+tf.app.flags.DEFINE_integer('num_examples_per_epoch_for_eval', 303,
+                            """Number of examples per epoch for evaluation.""")
+tf.app.flags.DEFINE_integer('num_batches', 2,
+                            """Number of classes.""")
 
-
+def data_file_root():
+    return FLAGS.data_url.split('/')[-1][0:-4]
 
 def read_cifar10(filename_queue):
   """Reads and parses examples from CIFAR10 data files.
@@ -75,8 +85,8 @@ def read_cifar10(filename_queue):
   # See http://www.cs.toronto.edu/~kriz/cifar.html for a description of the
   # input format.
   label_bytes = 1  # 2 for CIFAR-100
-  result.height = IMAGE_SIZE
-  result.width = IMAGE_SIZE
+  result.height = FLAGS.image_size
+  result.width = FLAGS.image_size
   result.depth = 3
   image_bytes = result.height * result.width * result.depth
   # Every record consists of a label followed by the image, with a
@@ -153,11 +163,11 @@ def distorted_inputs(data_dir, batch_size):
     batch_size: Number of images per batch.
 
   Returns:
-    images: Images. 4D tensor of [batch_size, IMAGE_SIZE, IMAGE_SIZE, 3] size.
+    images: Images. 4D tensor of [batch_size, FLAGS.image_size, FLAGS.image_size, 3] size.
     labels: Labels. 1D tensor of [batch_size] size.
   """
-  filenames = [os.path.join(data_dir, TRAIN_FILE)
-               for i in xrange(1, NUM_BATCHES)]
+  filenames = [os.path.join(data_dir, FLAGS.train_file)
+               for i in xrange(1, FLAGS.num_batches)]
   for f in filenames:
     if not tf.gfile.Exists(f):
       raise ValueError('Failed to find file: ' + f)
@@ -169,8 +179,8 @@ def distorted_inputs(data_dir, batch_size):
   read_input = read_cifar10(filename_queue)
   reshaped_image = tf.cast(read_input.uint8image, tf.float32)
 
-  height = IMAGE_SIZE
-  width = IMAGE_SIZE
+  height = FLAGS.image_size
+  width = FLAGS.image_size
 
   # Image processing for training the network. Note the many random
   # distortions applied to the image.
@@ -193,7 +203,7 @@ def distorted_inputs(data_dir, batch_size):
 
   # Ensure that the random shuffling has good mixing properties.
   min_fraction_of_examples_in_queue = 0.4
-  min_queue_examples = int(NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN *
+  min_queue_examples = int(FLAGS.num_examples_per_epoch_for_train *
                            min_fraction_of_examples_in_queue)
   print ('Filling queue with %d CIFAR images before starting to train. '
          'This will take a few minutes.' % min_queue_examples)
@@ -217,12 +227,12 @@ def inputs(eval_data, data_dir, batch_size):
     labels: Labels. 1D tensor of [batch_size] size.
   """
   if not eval_data:
-    filenames = [os.path.join(data_dir, TRAIN_FILE)
-                 for i in xrange(1, NUM_BATCHES)]
-    num_examples_per_epoch = NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN
+    filenames = [os.path.join(data_dir, FLAGS.train_file)
+                 for i in xrange(1, FLAGS.num_batches)]
+    num_examples_per_epoch = FLAGS.num_examples_per_epoch_for_train
   else:
-    filenames = [os.path.join(data_dir, EVAL_FILE)]
-    num_examples_per_epoch = NUM_EXAMPLES_PER_EPOCH_FOR_EVAL
+    filenames = [os.path.join(data_dir, FLAGS.eval_file)]
+    num_examples_per_epoch = FLAGS.num_examples_per_epoch_for_eval
 
   for f in filenames:
     if not tf.gfile.Exists(f):
