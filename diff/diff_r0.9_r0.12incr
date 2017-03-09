@@ -1,0 +1,567 @@
+*** diff face_cifar10_r0.9/__init__.py face_incr_cifar10_r0.12/__init__.py
+21,22c21,22
+< from face_cifar10 import cifar10
+< from face_cifar10 import cifar10_input
+---
+> from mcifar10 import cifar10
+> from mcifar10 import cifar10_input
+Only in face_incr_cifar10_r0.12: __init__.pyc
+
+*** diff face_cifar10_r0.9/cifar10.py face_incr_cifar10_r0.12/cifar10.py
+13c13
+< # limitations under the License.
+---
+> # limitations under the License.
+48c48
+< from face_cifar10 import cifar10_input
+---
+> from mcifar10 import cifar10_input
+57,64c57,60
+<
+< # Global constants describing the CIFAR-10 data set.
+< IMAGE_SIZE = cifar10_input.IMAGE_SIZE
+< NUM_CLASSES = cifar10_input.NUM_CLASSES
+< NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = cifar10_input.NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN
+< NUM_EXAMPLES_PER_EPOCH_FOR_EVAL = cifar10_input.NUM_EXAMPLES_PER_EPOCH_FOR_EVAL
+< TRAIN_FILE = cifar10_input.TRAIN_FILE
+< EVAL_FILE = cifar10_input.EVAL_FILE
+---
+> tf.app.flags.DEFINE_boolean('use_fp16', False,
+>                             """Train the model using fp16.""")
+> tf.app.flags.DEFINE_boolean('custom_overrides', True,
+>                             """Custom overrides for certain TF values.""")
+67,70c63,70
+< MOVING_AVERAGE_DECAY = 0.9999     # The decay to use for the moving average.
+< NUM_EPOCHS_PER_DECAY = 350.0      # Epochs after which learning rate decays.
+< LEARNING_RATE_DECAY_FACTOR = 0.1  # Learning rate decay factor.
+< INITIAL_LEARNING_RATE = 0.01 #0.1       # Initial learning rate.
+---
+> tf.app.flags.DEFINE_float('moving_average_decay', 0.9999 ,
+>                             """The decay to use for the moving average.""")
+> tf.app.flags.DEFINE_float('num_epochs_per_decay', 350.0 ,
+>                             """Epochs after which learning rate decays.""")
+> tf.app.flags.DEFINE_float('learning_rate_decay_factor', 0.1 ,
+>                             """Learning rate decay factor.""")
+> tf.app.flags.DEFINE_float('initial_learning_rate', 0.01 ,
+>                             """Initial learning rate.""")
+77,82d76
+< #DATA_URL = 'http://www.cs.toronto.edu/~kriz/cifar-10-binary.tar.gz'
+< #DATA_URL = 'https://dl.dropboxusercontent.com/s/5ic8b62y7a97aow/Classification_Pi_Noise.zip'
+< #DATA_URL = 'https://dl.dropboxusercontent.com/s/3i2da52ktt4l9j0/Classification_Pi_Noise_Nc.zip'
+< DATA_URL = cifar10_input.DATA_URL
+< DATA_FILE_ROOT = cifar10_input.DATA_FILE_ROOT
+<
+97,98c91,92
+<   tf.histogram_summary(tensor_name + '/activations', x)
+<   tf.scalar_summary(tensor_name + '/sparsity', tf.nn.zero_fraction(x))
+---
+>   tf.summary.histogram(tensor_name + '/activations', x)
+>   tf.summary.scalar(tensor_name + '/sparsity', tf.nn.zero_fraction(x))
+113c107,108
+<     var = tf.get_variable(name, shape, initializer=initializer)
+---
+>     dtype = tf.float16 if FLAGS.use_fp16 else tf.float32
+>     var = tf.get_variable(name, shape, initializer=initializer, dtype=dtype)
+133,134c128,132
+<   var = _variable_on_cpu(name, shape,
+<                          tf.truncated_normal_initializer(stddev=stddev))
+---
+>   dtype = tf.float16 if FLAGS.use_fp16 else tf.float32
+>   var = _variable_on_cpu(
+>       name,
+>       shape,
+>       tf.truncated_normal_initializer(stddev=stddev, dtype=dtype))
+145c143
+<     images: Images. 4D tensor of [batch_size, IMAGE_SIZE, IMAGE_SIZE, 3] size.
+---
+>     images: Images. 4D tensor of [batch_size, FLAGS.image_size, FLAGS.image_size, 3] size.
+153,155c151,157
+<   data_dir = os.path.join(FLAGS.data_dir, DATA_FILE_ROOT)
+<   return cifar10_input.distorted_inputs(data_dir=data_dir,
+<                                         batch_size=FLAGS.batch_size)
+---
+>   data_dir = os.path.join(FLAGS.data_dir, cifar10_input.data_file_root())
+>   images, labels = cifar10_input.distorted_inputs(data_dir=data_dir,
+>                                                   batch_size=FLAGS.batch_size)
+>   if FLAGS.use_fp16:
+>     images = tf.cast(images, tf.float16)
+>     labels = tf.cast(labels, tf.float16)
+>   return images, labels
+165c167
+<     images: Images. 4D tensor of [batch_size, IMAGE_SIZE, IMAGE_SIZE, 3] size.
+---
+>     images: Images. 4D tensor of [batch_size, FLAGS.image_size, FLAGS.image_size, 3] size.
+173,175c175,182
+<   data_dir = os.path.join(FLAGS.data_dir, DATA_FILE_ROOT)
+<   return cifar10_input.inputs(eval_data=eval_data, data_dir=data_dir,
+<                               batch_size=FLAGS.batch_size)
+---
+>   data_dir = os.path.join(FLAGS.data_dir, cifar10_input.data_file_root())
+>   images, labels = cifar10_input.inputs(eval_data=eval_data,
+>                                         data_dir=data_dir,
+>                                         batch_size=FLAGS.batch_size)
+>   if FLAGS.use_fp16:
+>     images = tf.cast(images, tf.float16)
+>     labels = tf.cast(labels, tf.float16)
+>   return images, labels
+192,193c199,200
+<   # conv1
+< #V1 Measurements:
+---
+>   # conv1
+> #V1 Measurements:
+195,196c202,205
+<     kernel = _variable_with_weight_decay('weights', shape=[5, 5, 3, 64],
+<                                          stddev=1e-4, wd=0.0)
+---
+>     kernel = _variable_with_weight_decay('weights',
+>                                          shape=[5, 5, 3, 64],
+>                                          stddev=1e-4 if FLAGS.custom_overrides else 5e-2, #Note: TF code now uses 5e-2
+>                                          wd=0.0)
+199,200c208,209
+<     bias = tf.nn.bias_add(conv, biases)
+<     conv1 = tf.nn.relu(bias, name=scope.name)
+---
+>     pre_activation = tf.nn.bias_add(conv, biases)
+>     conv1 = tf.nn.relu(pre_activation, name=scope.name)
+212,213c221,224
+<     kernel = _variable_with_weight_decay('weights', shape=[5, 5, 64, 64],
+<                                          stddev=1e-4, wd=0.0)
+---
+>     kernel = _variable_with_weight_decay('weights',
+>                                          shape=[5, 5, 64, 64],
+>                                          stddev=1e-4 if FLAGS.custom_overrides else 5e-2, #Note: TF code now uses 5e-2
+>                                          wd=0.0)
+216,217c227,228
+<     bias = tf.nn.bias_add(conv, biases)
+<     conv2 = tf.nn.relu(bias, name=scope.name)
+---
+>     pre_activation = tf.nn.bias_add(conv, biases)
+>     conv2 = tf.nn.relu(pre_activation, name=scope.name)
+246c257,260
+<   # softmax, i.e. softmax(WX + b)
+---
+>   # linear layer(WX + b),
+>   # We don't apply softmax here because
+>   # tf.nn.sparse_softmax_cross_entropy_with_logits accepts the unscaled logits
+>   # and performs the softmax internally for efficiency.
+248c262
+<     weights = _variable_with_weight_decay('weights', [192, NUM_CLASSES],
+---
+>     weights = _variable_with_weight_decay('weights', [192, FLAGS.num_classes],
+250c264
+<     biases = _variable_on_cpu('biases', [NUM_CLASSES],
+---
+>     biases = _variable_on_cpu('biases', [FLAGS.num_classes],
+303,304c317,318
+<     tf.scalar_summary(l.op.name +' (raw)', l)
+<     tf.scalar_summary(l.op.name, loss_averages.average(l))
+---
+>     tf.summary.scalar(l.op.name +' (raw)', l)
+>     tf.summary.scalar(l.op.name, loss_averages.average(l))
+309c323
+< def train(total_loss, global_step):
+---
+> def train(total_loss, global_step, vars_to_not_train=None):
+323,324c337,338
+<   num_batches_per_epoch = NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN / FLAGS.batch_size
+<   decay_steps = int(num_batches_per_epoch * NUM_EPOCHS_PER_DECAY)
+---
+>   num_batches_per_epoch = FLAGS.num_examples_per_epoch_for_train / FLAGS.batch_size
+>   decay_steps = int(num_batches_per_epoch * FLAGS.num_epochs_per_decay)
+327c341
+<   lr = tf.train.exponential_decay(INITIAL_LEARNING_RATE,
+---
+>   lr = tf.train.exponential_decay(FLAGS.initial_learning_rate,
+330c344
+<                                   LEARNING_RATE_DECAY_FACTOR,
+---
+>                                   FLAGS.learning_rate_decay_factor,
+332c346
+<   tf.scalar_summary('learning_rate', lr)
+---
+>   tf.summary.scalar('learning_rate', lr)
+340c354,371
+<     grads = opt.compute_gradients(total_loss)
+---
+>     if vars_to_not_train==None:
+>       grads = opt.compute_gradients(total_loss)
+>     else:
+>       if False:
+>         print(vars_to_not_train)
+>       vars_to_train = []
+>       for v in tf.trainable_variables():
+>         include_variable = True
+>         for w in vars_to_not_train:
+>           if v.name.startswith(w)==True:
+>             include_variable = False
+>             break
+>         if include_variable:
+>           vars_to_train.append(v)
+>       if False:
+>         for v in vars_to_train:
+>           print(v.name)
+>       grads = opt.compute_gradients(total_loss, var_list=vars_to_train)
+347c378
+<     tf.histogram_summary(var.op.name, var)
+---
+>     tf.summary.histogram(var.op.name, var)
+352c383
+<       tf.histogram_summary(var.op.name + '/gradients', grad)
+---
+>       tf.summary.histogram(var.op.name + '/gradients', grad)
+356c387
+<       MOVING_AVERAGE_DECAY, global_step)
+---
+>       FLAGS.moving_average_decay, global_step)
+371c402
+<   filename = DATA_URL.split('/')[-1]
+---
+>   filename = FLAGS.data_url.split('/')[-1]
+378c409
+<     filepath, _ = urllib.request.urlretrieve(DATA_URL, filepath, _progress)
+---
+>     filepath, _ = urllib.request.urlretrieve(FLAGS.data_url, filepath, _progress)
+Only in face_incr_cifar10_r0.12: cifar10.pyc
+
+*** diff face_cifar10_r0.9/cifar10_eval.py face_incr_cifar10_r0.12/cifar10_eval.py
+45c45
+< from face_cifar10 import cifar10
+---
+> from mcifar10 import cifar10
+78c78
+< 		return 0
+---
+> 		return 0
+127c127
+< 	return sum_avg/amount
+---
+> 	return sum_avg/amount
+163,166c163,166
+<       new_predicts_for_each_label = [0 for i in range(cifar10.NUM_CLASSES)]
+<       new_correct_predicts_for_each_label = [0 for i in range(cifar10.NUM_CLASSES)]
+<       new_incorrect_predicts_for_each_label = [0 for i in range(cifar10.NUM_CLASSES)]
+<       new_actual_amount_per_label = [0 for i in range(cifar10.NUM_CLASSES)]
+---
+>       new_predicts_for_each_label = [0 for i in range(FLAGS.num_classes)]
+>       new_correct_predicts_for_each_label = [0 for i in range(FLAGS.num_classes)]
+>       new_incorrect_predicts_for_each_label = [0 for i in range(FLAGS.num_classes)]
+>       new_actual_amount_per_label = [0 for i in range(FLAGS.num_classes)]
+173c173
+<         #print(new_indices)
+---
+>         #print(new_indices)
+183c183
+< 	        	new_incorrect_predicts_for_each_label[predict_class] += 1
+---
+> 	        	new_incorrect_predicts_for_each_label[predict_class] += 1
+188c188
+<       #print(new_correct_predicts_for_each_label)
+---
+>       #print(new_correct_predicts_for_each_label)
+196c196
+<       # Compute precision @ 1.
+---
+>       # Compute precision @ 1.
+229c229
+<         cifar10.MOVING_AVERAGE_DECAY)
+---
+>         FLAGS.moving_average_decay)
+
+*** diff face_cifar10_r0.9/cifar10_input.py face_incr_cifar10_r0.12/cifar10_input.py
+13c13
+< # limitations under the License.
+---
+> # limitations under the License.
+27a28,29
+> FLAGS = tf.app.flags.FLAGS
+>
+33c35,36
+< IMAGE_SIZE = 140
+---
+> tf.app.flags.DEFINE_integer('image_size', 140,
+>                             """Size of image to be processed.""")
+36,45c39,53
+< #DATA_URL = 'https://dl.dropboxusercontent.com/s/5ic8b62y7a97aow/Classification_Pi_Noise.zip'
+< DATA_URL = 'https://dl.dropbox.com/s/u1dn6z5j8u79w71/Classification_All_Blur_140v1.zip'
+< DATA_FILE_ROOT = DATA_URL.split('/')[-1][0:-4]
+< TRAIN_FILE = 'all_train.bin'
+< EVAL_FILE = 'all_test13.bin'
+< NUM_CLASSES = 101
+< NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 1212
+< NUM_EXAMPLES_PER_EPOCH_FOR_EVAL = 303
+< NUM_BATCHES = 2
+<
+---
+> tf.app.flags.DEFINE_string('data_url',
+>                             'https://dl.dropbox.com/s/u1dn6z5j8u79w71/Classification_All_Blur_140v1.zip',
+>                             """URL to download data from.""")
+> tf.app.flags.DEFINE_string('train_file', 'all_train.bin',
+>                             """Training filename.""")
+> tf.app.flags.DEFINE_string('eval_file', 'all_test13.bin',
+>                             """Evaluation filename..""")
+> tf.app.flags.DEFINE_integer('num_classes', 101,
+>                             """Number of classes.""")
+> tf.app.flags.DEFINE_integer('num_examples_per_epoch_for_train', 1212,
+>                             """Number of examples per epoch for training.""")
+> tf.app.flags.DEFINE_integer('num_examples_per_epoch_for_eval', 303,
+>                             """Number of examples per epoch for evaluation.""")
+> tf.app.flags.DEFINE_integer('num_batches', 2,
+>                             """Number of classes.""")
+46a55,56
+> def data_file_root():
+>     return FLAGS.data_url.split('/')[-1][0:-4]
+78,79c88,89
+<   result.height = IMAGE_SIZE
+<   result.width = IMAGE_SIZE
+---
+>   result.height = FLAGS.image_size
+>   result.width = FLAGS.image_size
+143c153
+<   tf.image_summary('images', images)
+---
+>   tf.summary.image('images', images)
+156c166
+<     images: Images. 4D tensor of [batch_size, IMAGE_SIZE, IMAGE_SIZE, 3] size.
+---
+>     images: Images. 4D tensor of [batch_size, FLAGS.image_size, FLAGS.image_size, 3] size.
+159,160c169,170
+<   filenames = [os.path.join(data_dir, TRAIN_FILE)
+<                for i in xrange(1, NUM_BATCHES)]
+---
+>   filenames = [os.path.join(data_dir, FLAGS.train_file)
+>                for i in xrange(1, FLAGS.num_batches)]
+172,173c182,183
+<   height = IMAGE_SIZE
+<   width = IMAGE_SIZE
+---
+>   height = FLAGS.image_size
+>   width = FLAGS.image_size
+192c202
+<   float_image = tf.image.per_image_whitening(distorted_image)
+---
+>   float_image = tf.image.per_image_standardization(distorted_image)
+196c206
+<   min_queue_examples = int(NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN *
+---
+>   min_queue_examples = int(FLAGS.num_examples_per_epoch_for_train *
+220,222c230,232
+<     filenames = [os.path.join(data_dir, TRAIN_FILE)
+<                  for i in xrange(1, NUM_BATCHES)]
+<     num_examples_per_epoch = NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN
+---
+>     filenames = [os.path.join(data_dir, FLAGS.train_file)
+>                  for i in xrange(1, FLAGS.num_batches)]
+>     num_examples_per_epoch = FLAGS.num_examples_per_epoch_for_train
+224,225c234,235
+<     filenames = [os.path.join(data_dir, EVAL_FILE)]
+<     num_examples_per_epoch = NUM_EXAMPLES_PER_EPOCH_FOR_EVAL
+---
+>     filenames = [os.path.join(data_dir, FLAGS.eval_file)]
+>     num_examples_per_epoch = FLAGS.num_examples_per_epoch_for_eval
+247c257
+<   float_image = tf.image.per_image_whitening(resized_image)
+---
+>   float_image = tf.image.per_image_standardization(resized_image)
+Only in face_incr_cifar10_r0.12: cifar10_input.pyc
+
+*** diff face_cifar10_r0.9/cifar10_input_test.py face_incr_cifar10_r0.12/cifar10_input_test.py
+26c26
+< from face_cifar10 import cifar10_input
+---
+> from mcifar10 import cifar10_input
+
+*** diff face_cifar10_r0.9/cifar10_multi_gpu_train.py face_incr_cifar10_r0.12/cifar10_multi_gpu_train.py
+50c50
+< from face_cifar10 import cifar10
+---
+> from mcifar10 import cifar10
+56a57,58
+> tf.app.flags.DEFINE_string('checkpoint_dir', '/tmp/mcifar10_train',
+>                            """Directory where to read model checkpoints.""")
+63c65,68
+<
+---
+> tf.app.flags.DEFINE_boolean('retrain', False,
+>                             """Whether to retrain.""")
+> tf.app.flags.DEFINE_integer('retrain_count', 1,
+>                             """Numer of final layers to retrains [1 or 2].""")
+90,93d94
+<   # Compute the moving average of all individual losses and the total loss.
+<   loss_averages = tf.train.ExponentialMovingAverage(0.9, name='avg')
+<   loss_averages_op = loss_averages.apply(losses + [total_loss])
+<
+100,103c101
+<     # Name each loss as '(raw)' and name the moving average version of the loss
+<     # as the original loss name.
+<     tf.scalar_summary(loss_name +' (raw)', l)
+<     tf.scalar_summary(loss_name, loss_averages.average(l))
+---
+>     tf.summary.scalar(loss_name, l)
+105,106d102
+<   with tf.control_dependencies([loss_averages_op]):
+<     total_loss = tf.identity(total_loss)
+158c154
+<     num_batches_per_epoch = (cifar10.NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN /
+---
+>     num_batches_per_epoch = (FLAGS.num_examples_per_epoch_for_train /
+160c156
+<     decay_steps = int(num_batches_per_epoch * cifar10.NUM_EPOCHS_PER_DECAY)
+---
+>     decay_steps = int(num_batches_per_epoch * FLAGS.num_epochs_per_decay)
+163c159
+<     lr = tf.train.exponential_decay(cifar10.INITIAL_LEARNING_RATE,
+---
+>     lr = tf.train.exponential_decay(FLAGS.initial_learning_rate,
+166c162
+<                                     cifar10.LEARNING_RATE_DECAY_FACTOR,
+---
+>                                     FLAGS.learning_rate_decay_factor,
+199c195
+<     summaries.append(tf.scalar_summary('learning_rate', lr))
+---
+>     summaries.append(tf.summary.scalar('learning_rate', lr))
+205c201
+<             tf.histogram_summary(var.op.name + '/gradients', grad))
+---
+>             tf.summary.histogram(var.op.name + '/gradients', grad))
+212c208
+<       summaries.append(tf.histogram_summary(var.op.name, var))
+---
+>       summaries.append(tf.summary.histogram(var.op.name, var))
+229c225
+<     init = tf.initialize_all_variables()
+---
+>     init = tf.global_variables_initializer()
+273,276c269,283
+<   if tf.gfile.Exists(FLAGS.train_dir):
+<     tf.gfile.DeleteRecursively(FLAGS.train_dir)
+<   tf.gfile.MakeDirs(FLAGS.train_dir)
+<   train()
+---
+>   if FLAGS.retrain_count!=1: FLAGS.retrain_count=2
+>   if FLAGS.retrain:
+>     print ("Will only retrain the final %d layer(s)."%(FLAGS.retrain_count))
+>     if FLAGS.train_dir[-5:]=='train' and FLAGS.train_dir[-7:]!='train':
+>       FLAGS.train_dir=FLAGS.train_dir[0:-5]+'retrain'
+>     if tf.gfile.Exists(FLAGS.train_dir):
+>       tf.gfile.DeleteRecursively(FLAGS.train_dir)
+>     tf.gfile.MakeDirs(FLAGS.train_dir)
+>     train(True,FLAGS.retrain_count)
+>   else:
+>     print ("Will train from scratch")
+>     if tf.gfile.Exists(FLAGS.train_dir):
+>       tf.gfile.DeleteRecursively(FLAGS.train_dir)
+>     tf.gfile.MakeDirs(FLAGS.train_dir)
+>     train()
+
+*** diff face_cifar10_r0.9/cifar10_train.py face_incr_cifar10_r0.12/cifar10_train.py
+13c13
+< # limitations under the License.
+---
+> # limitations under the License.
+49c49
+< from face_cifar10 import cifar10
+---
+> from mcifar10 import cifar10
+55a56,57
+> tf.app.flags.DEFINE_string('checkpoint_dir', '/tmp/mcifar10_train',
+>                            """Directory where to read model checkpoints.""")
+59a62,65
+> tf.app.flags.DEFINE_boolean('retrain', False,
+>                             """Whether to retrain.""")
+> tf.app.flags.DEFINE_integer('retrain_count', 1,
+>                             """Numer of final layers to retrains [1 or 2].""")
+62c68
+< def train():
+---
+> def train(retrain=False,retrain_count=1):
+79c85,91
+<     train_op = cifar10.train(loss, global_step)
+---
+>     if not retrain:
+>       train_op = cifar10.train(loss, global_step)
+>     else:
+>       if retrain_count==1:
+>         train_op = cifar10.train(loss, global_step, ["softmax_linear"])
+>       else:
+>         train_op = cifar10.train(loss, global_step, ["softmax_linear", "local4"])
+82c94
+<     saver = tf.train.Saver(tf.all_variables())
+---
+>     saver = tf.train.Saver(tf.global_variables())
+85c97
+<     summary_op = tf.merge_all_summaries()
+---
+>     summary_op = tf.summary.merge_all()
+87,88c99,131
+<     # Build an initialization operation to run below.
+<     init = tf.initialize_all_variables()
+---
+>     ### RETRAINING START
+>
+>     if FLAGS.retrain:
+>       if False:
+>         print("GLOBAL =============================================================================")
+>         for v in tf.global_variables(): print(v.name)
+>         print("TRAINABLE =============================================================================")
+>         for v in tf.trainable_variables(): print(v.name)
+>         print("MOVING AVERAGES =============================================================================")
+>         for v in tf.moving_average_variables(): print(v.name)
+>       variable_averages = tf.train.ExponentialMovingAverage(FLAGS.moving_average_decay)
+>       variables_to_restore = variable_averages.variables_to_restore()
+>       if FLAGS.retrain_count==1:
+>         variables_to_restore = [v for v in tf.global_variables() if v.name[0:14]!="softmax_linear"]
+>         variables_to_initialize = [v for v in tf.global_variables() if v.name[0:14]=="softmax_linear"]
+>       else:
+>         variables_to_restore = [v for v in tf.global_variables() if v.name[0:14]!="softmax_linear" and v.name[0:6]!="local4"]
+>         variables_to_initialize = [v for v in tf.global_variables() if v.name[0:14]=="softmax_linear" or v.name[0:6]=="local4"]
+>       if False:
+>         print("RESTORE =============================================================================")
+>         for v in variables_to_restore: print(v.name)
+>         print("INITIALIZE =============================================================================")
+>         for v in variables_to_initialize: print(v.name)
+>       saver_retrain = tf.train.Saver(variables_to_restore)
+>       ckpt = tf.train.get_checkpoint_state(FLAGS.checkpoint_dir)
+>       if not (ckpt and ckpt.model_checkpoint_path):
+>         print('Yikes! No checkpoint file found at %s to retrain :-('%(FLAGS.checkpoint_dir))
+>         return
+>       # Build an initialization operation to run below.
+>       init = tf.variables_initializer([v for v in tf.global_variables() if v.name[0:14]=="softmax_linear"])
+>     else:
+>       # Build an initialization operation to run below.
+>       init = tf.global_variables_initializer()
+92a136,140
+>
+>     if FLAGS.retrain:
+>       # Restores from checkpoint
+>       saver_retrain.restore(sess, ckpt.model_checkpoint_path)
+>
+98c146
+<     summary_writer = tf.train.SummaryWriter(FLAGS.train_dir, sess.graph)
+---
+>     summary_writer = tf.summary.FileWriter(FLAGS.train_dir, sess.graph)
+126d173
+<
+129,133c176,190
+<   if tf.gfile.Exists(FLAGS.train_dir):
+<     tf.gfile.DeleteRecursively(FLAGS.train_dir)
+<   tf.gfile.MakeDirs(FLAGS.train_dir)
+<   train()
+<
+---
+>   if FLAGS.retrain_count!=1: FLAGS.retrain_count=2
+>   if FLAGS.retrain:
+>     print ("Will only retrain the final %d layer(s)."%(FLAGS.retrain_count))
+>     if FLAGS.train_dir[-5:]=='train' and FLAGS.train_dir[-7:]!='train':
+>       FLAGS.train_dir=FLAGS.train_dir[0:-5]+'retrain'
+>     if tf.gfile.Exists(FLAGS.train_dir):
+>       tf.gfile.DeleteRecursively(FLAGS.train_dir)
+>     tf.gfile.MakeDirs(FLAGS.train_dir)
+>     train(True,FLAGS.retrain_count)
+>   else:
+>     print ("Will train from scratch")
+>     if tf.gfile.Exists(FLAGS.train_dir):
+>       tf.gfile.DeleteRecursively(FLAGS.train_dir)
+>     tf.gfile.MakeDirs(FLAGS.train_dir)
+>     train()

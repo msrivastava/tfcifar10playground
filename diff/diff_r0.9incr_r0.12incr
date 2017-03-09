@@ -1,0 +1,177 @@
+Only in face_incr_cifar10_r0.12: __init__.pyc
+diff face_incr_cifar10_r0.9/cifar10.py face_incr_cifar10_r0.12/cifar10.py
+95,96c95,96
+<   tf.histogram_summary(tensor_name + '/activations', x)
+<   tf.scalar_summary(tensor_name + '/sparsity', tf.nn.zero_fraction(x))
+---
+>   tf.summary.histogram(tensor_name + '/activations', x)
+>   tf.summary.scalar(tensor_name + '/sparsity', tf.nn.zero_fraction(x))
+111c111,112
+<     var = tf.get_variable(name, shape, initializer=initializer)
+---
+>     dtype = tf.float16 if FLAGS.use_fp16 else tf.float32
+>     var = tf.get_variable(name, shape, initializer=initializer, dtype=dtype)
+131,132c132,136
+<   var = _variable_on_cpu(name, shape,
+<                          tf.truncated_normal_initializer(stddev=stddev))
+---
+>   dtype = tf.float16 if FLAGS.use_fp16 else tf.float32
+>   var = _variable_on_cpu(
+>       name,
+>       shape,
+>       tf.truncated_normal_initializer(stddev=stddev, dtype=dtype))
+152,153c156,161
+<   return cifar10_input.distorted_inputs(data_dir=data_dir,
+<                                         batch_size=FLAGS.batch_size)
+---
+>   images, labels = cifar10_input.distorted_inputs(data_dir=data_dir,
+>                                                   batch_size=FLAGS.batch_size)
+>   if FLAGS.use_fp16:
+>     images = tf.cast(images, tf.float16)
+>     labels = tf.cast(labels, tf.float16)
+>   return images, labels
+172,173c180,186
+<   return cifar10_input.inputs(eval_data=eval_data, data_dir=data_dir,
+<                               batch_size=FLAGS.batch_size)
+---
+>   images, labels = cifar10_input.inputs(eval_data=eval_data,
+>                                         data_dir=data_dir,
+>                                         batch_size=FLAGS.batch_size)
+>   if FLAGS.use_fp16:
+>     images = tf.cast(images, tf.float16)
+>     labels = tf.cast(labels, tf.float16)
+>   return images, labels
+193,194c206,209
+<     kernel = _variable_with_weight_decay('weights', shape=[5, 5, 3, 64],
+<                                          stddev=1e-4, wd=0.0)
+---
+>     kernel = _variable_with_weight_decay('weights',
+>                                          shape=[5, 5, 3, 64],
+>                                          stddev=1e-4 if FLAGS.custom_overrides else 5e-2, #Note: TF code now uses 5e-2
+>                                          wd=0.0)
+197,198c212,213
+<     bias = tf.nn.bias_add(conv, biases)
+<     conv1 = tf.nn.relu(bias, name=scope.name)
+---
+>     pre_activation = tf.nn.bias_add(conv, biases)
+>     conv1 = tf.nn.relu(pre_activation, name=scope.name)
+210,211c225,228
+<     kernel = _variable_with_weight_decay('weights', shape=[5, 5, 64, 64],
+<                                          stddev=1e-4, wd=0.0)
+---
+>     kernel = _variable_with_weight_decay('weights',
+>                                          shape=[5, 5, 64, 64],
+>                                          stddev=1e-4 if FLAGS.custom_overrides else 5e-2, #Note: TF code now uses 5e-2
+>                                          wd=0.0)
+214,215c231,232
+<     bias = tf.nn.bias_add(conv, biases)
+<     conv2 = tf.nn.relu(bias, name=scope.name)
+---
+>     pre_activation = tf.nn.bias_add(conv, biases)
+>     conv2 = tf.nn.relu(pre_activation, name=scope.name)
+244c261,264
+<   # softmax, i.e. softmax(WX + b)
+---
+>   # linear layer(WX + b),
+>   # We don't apply softmax here because
+>   # tf.nn.sparse_softmax_cross_entropy_with_logits accepts the unscaled logits
+>   # and performs the softmax internally for efficiency.
+301,302c321,322
+<     tf.scalar_summary(l.op.name +' (raw)', l)
+<     tf.scalar_summary(l.op.name, loss_averages.average(l))
+---
+>     tf.summary.scalar(l.op.name +' (raw)', l)
+>     tf.summary.scalar(l.op.name, loss_averages.average(l))
+330c350
+<   tf.scalar_summary('learning_rate', lr)
+---
+>   tf.summary.scalar('learning_rate', lr)
+338,341d357
+<     grads = opt.compute_gradients(total_loss)
+<   # Compute gradients.
+<   with tf.control_dependencies([loss_averages_op]):
+<     opt = tf.train.GradientDescentOptimizer(lr)
+346c362
+<         print("Variables to not train:")
+---
+>         print("Variables to not train")
+367c383
+<     tf.histogram_summary(var.op.name, var)
+---
+>     tf.summary.histogram(var.op.name, var)
+372c388
+<       tf.histogram_summary(var.op.name + '/gradients', grad)
+---
+>       tf.summary.histogram(var.op.name + '/gradients', grad)
+Only in face_incr_cifar10_r0.12: cifar10.pyc
+diff face_incr_cifar10_r0.9/cifar10_input.py face_incr_cifar10_r0.12/cifar10_input.py
+39d38
+< # Global constants describing the CIFAR-10 data set.
+54a54
+> 
+153c153
+<   tf.image_summary('images', images)
+---
+>   tf.summary.image('images', images)
+202c202
+<   float_image = tf.image.per_image_whitening(distorted_image)
+---
+>   float_image = tf.image.per_image_standardization(distorted_image)
+257c257
+<   float_image = tf.image.per_image_whitening(resized_image)
+---
+>   float_image = tf.image.per_image_standardization(resized_image)
+Only in face_incr_cifar10_r0.12: cifar10_input.pyc
+diff face_incr_cifar10_r0.9/cifar10_multi_gpu_train.py face_incr_cifar10_r0.12/cifar10_multi_gpu_train.py
+95,98d94
+<   # Compute the moving average of all individual losses and the total loss.
+<   loss_averages = tf.train.ExponentialMovingAverage(0.9, name='avg')
+<   loss_averages_op = loss_averages.apply(losses + [total_loss])
+< 
+105,108c101
+<     # Name each loss as '(raw)' and name the moving average version of the loss
+<     # as the original loss name.
+<     tf.scalar_summary(loss_name +' (raw)', l)
+<     tf.scalar_summary(loss_name, loss_averages.average(l))
+---
+>     tf.summary.scalar(loss_name, l)
+110,111d102
+<   with tf.control_dependencies([loss_averages_op]):
+<     total_loss = tf.identity(total_loss)
+204c195
+<     summaries.append(tf.scalar_summary('learning_rate', lr))
+---
+>     summaries.append(tf.summary.scalar('learning_rate', lr))
+210c201
+<             tf.histogram_summary(var.op.name + '/gradients', grad))
+---
+>             tf.summary.histogram(var.op.name + '/gradients', grad))
+217c208
+<       summaries.append(tf.histogram_summary(var.op.name, var))
+---
+>       summaries.append(tf.summary.histogram(var.op.name, var))
+234c225
+<     init = tf.initialize_all_variables()
+---
+>     init = tf.global_variables_initializer()
+diff face_incr_cifar10_r0.9/cifar10_train.py face_incr_cifar10_r0.12/cifar10_train.py
+94c94
+<     saver = tf.train.Saver(tf.all_variables())
+---
+>     saver = tf.train.Saver(tf.global_variables())
+97c97
+<     summary_op = tf.merge_all_summaries()
+---
+>     summary_op = tf.summary.merge_all()
+128c128
+<       init = tf.initialize_all_variables([v for v in tf.global_variables() if v.name[0:14]=="softmax_linear"])
+---
+>       init = tf.variables_initializer([v for v in tf.global_variables() if v.name[0:14]=="softmax_linear"])
+131c131
+<       init = tf.initialize_all_variables()
+---
+>       init = tf.global_variables_initializer()
+146c146
+<     summary_writer = tf.train.SummaryWriter(FLAGS.train_dir, sess.graph)
+---
+>     summary_writer = tf.summary.FileWriter(FLAGS.train_dir, sess.graph)
