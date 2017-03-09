@@ -371,7 +371,7 @@ def train(total_loss, global_step, vars_to_not_train=None):
         if include_variable:
           vars_to_train.append(v)
       if FLAGS.debug:
-        print("Variables to train:"")
+        print("Variables to train:")
         print(vars_to_train)
       grads = opt.compute_gradients(total_loss, var_list=vars_to_train)
 
