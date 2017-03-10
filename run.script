@@ -1,6 +1,7 @@
 #!/bin/bash
 
 export PYTHONPATH=mcifar10 ; python -m mcifar10.cifar10_train \
+--custom_overrides False \
 --data_url http://www.cs.toronto.edu/~kriz/cifar-10-binary.tar.gz \
 --data_file_root cifar-10-batches-bin \
 --zip_datafile False \
