@@ -62,6 +62,8 @@ tf.app.flags.DEFINE_boolean('use_fp16', False,
                             """Train the model using fp16.""")
 tf.app.flags.DEFINE_boolean('custom_overrides', True,
                             """Custom overrides for certain TF values.""")
+tf.app.flags.DEFINE_boolean('zip_datafile', True,
+                            """Data file is in zip format.""")
 
 # Constants describing the training process.
 tf.app.flags.DEFINE_float('moving_average_decay', 0.9999 ,
@@ -152,7 +154,7 @@ def distorted_inputs():
   """
   if not FLAGS.data_dir:
     raise ValueError('Please supply a data_dir')
-  data_dir = os.path.join(FLAGS.data_dir, cifar10_input.data_file_root())
+  data_dir = os.path.join(FLAGS.data_dir, FLAGS.data_file_root)
   images, labels = cifar10_input.distorted_inputs(data_dir=data_dir,
                                                   batch_size=FLAGS.batch_size)
   if FLAGS.use_fp16:
@@ -176,7 +178,7 @@ def inputs(eval_data):
   """
   if not FLAGS.data_dir:
     raise ValueError('Please supply a data_dir')
-  data_dir = os.path.join(FLAGS.data_dir, cifar10_input.data_file_root())
+  data_dir = os.path.join(FLAGS.data_dir, FLAGS.data_file_root)
   images, labels = cifar10_input.inputs(eval_data=eval_data,
                                         data_dir=data_dir,
                                         batch_size=FLAGS.batch_size)
@@ -415,6 +417,8 @@ def maybe_download_and_extract():
     print()
     statinfo = os.stat(filepath)
     print('Successfully downloaded', filename, statinfo.st_size, 'bytes.')
-    #tarfile.open(filepath, 'r:gz').extractall(dest_directory)
-    with zipfile.ZipFile(filepath, 'r') as myzip:
-	  myzip.extractall(dest_directory)
+    if not FLAGS.zip_datafile:
+        tarfile.open(filepath, 'r:gz').extractall(dest_directory)
+    else:
+        with zipfile.ZipFile(filepath, 'r') as myzip:
+    	  myzip.extractall(dest_directory)

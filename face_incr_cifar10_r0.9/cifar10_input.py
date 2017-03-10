@@ -34,14 +34,22 @@ FLAGS = tf.app.flags.FLAGS
 # architecture will change and any model would need to be retrained.
 tf.app.flags.DEFINE_integer('image_size', 140,
                             """Size of image to be processed.""")
+tf.app.flags.DEFINE_integer('input_image_height', 140,
+                            """Height of image in dataset.""")
+tf.app.flags.DEFINE_integer('input_image_width', 140,
+                            """Width of image in dataset..""")
 
 # Global constants describing the CIFAR-10 data set.
 # Global constants describing the CIFAR-10 data set.
 tf.app.flags.DEFINE_string('data_url',
                             'https://dl.dropbox.com/s/u1dn6z5j8u79w71/Classification_All_Blur_140v1.zip',
                             """URL to download data from.""")
+tf.app.flags.DEFINE_string('data_file_root', 'Classification_All_Blur_140v1',
+                            """Data folder name.""")
 tf.app.flags.DEFINE_string('train_file', 'all_train.bin',
                             """Training filename.""")
+tf.app.flags.DEFINE_integer('num_train_files', 1,
+                            """Number of training files.""")
 tf.app.flags.DEFINE_string('eval_file', 'all_test13.bin',
                             """Evaluation filename..""")
 tf.app.flags.DEFINE_integer('num_classes', 101,
@@ -52,8 +60,12 @@ tf.app.flags.DEFINE_integer('num_examples_per_epoch_for_eval', 303,
                             """Number of examples per epoch for evaluation.""")
 tf.app.flags.DEFINE_integer('num_batches', 2,
                             """Number of classes.""")
-def data_file_root():
-    return FLAGS.data_url.split('/')[-1][0:-4]
+tf.app.flags.DEFINE_integer('label_bytes', 1,
+                            """Number of bytes in label.""") # 2 for CIFAR-100
+tf.app.flags.DEFINE_boolean('random_crop', False,
+                            """Distort by applying random cropping.""")
+tf.app.flags.DEFINE_boolean('random_flip', False,
+                            """Distort by applying random flippimg.""")
 
 def read_cifar10(filename_queue):
   """Reads and parses examples from CIFAR10 data files.
@@ -85,8 +97,8 @@ def read_cifar10(filename_queue):
   # See http://www.cs.toronto.edu/~kriz/cifar.html for a description of the
   # input format.
   label_bytes = 1  # 2 for CIFAR-100
-  result.height = FLAGS.image_size
-  result.width = FLAGS.image_size
+  result.height = FLAGS.input_image_height
+  result.width = FLAGS.input_image_width
   result.depth = 3
   image_bytes = result.height * result.width * result.depth
   # Every record consists of a label followed by the image, with a
@@ -166,8 +178,8 @@ def distorted_inputs(data_dir, batch_size):
     images: Images. 4D tensor of [batch_size, FLAGS.image_size, FLAGS.image_size, 3] size.
     labels: Labels. 1D tensor of [batch_size] size.
   """
-  filenames = [os.path.join(data_dir, FLAGS.train_file)
-               for i in xrange(1, FLAGS.num_batches)]
+  filenames = [os.path.join(data_dir, FLAGS.train_file % i if '%d' in FLAGS.train_file else FLAGS.train_file)
+               for i in xrange(1, FLAGS.num_train_files+1)]
   for f in filenames:
     if not tf.gfile.Exists(f):
       raise ValueError('Failed to find file: ' + f)
@@ -186,10 +198,12 @@ def distorted_inputs(data_dir, batch_size):
   # distortions applied to the image.
 
   # Randomly crop a [height, width] section of the image.
-  #distorted_image = tf.random_crop(reshaped_image, [height, width, 3])
+  if FLAGS.random_crop:
+      distorted_image = tf.random_crop(reshaped_image, [height, width, 3])
 
   # Randomly flip the image horizontally.
-  #distorted_image = tf.image.random_flip_left_right(distorted_image)
+  if FLAGS.random_flip:
+      distorted_image = tf.image.random_flip_left_right(distorted_image)
 
   # Because these operations are not commutative, consider randomizing
   # the order their operation.
@@ -227,8 +241,8 @@ def inputs(eval_data, data_dir, batch_size):
     labels: Labels. 1D tensor of [batch_size] size.
   """
   if not eval_data:
-    filenames = [os.path.join(data_dir, FLAGS.train_file)
-                 for i in xrange(1, FLAGS.num_batches)]
+    filenames = [os.path.join(data_dir, FLAGS.train_file % i if '%d' in FLAGS.train_file else FLAGS.train_file)
+                 for i in xrange(1, FLAGS.num_train_files+1)]
     num_examples_per_epoch = FLAGS.num_examples_per_epoch_for_train
   else:
     filenames = [os.path.join(data_dir, FLAGS.eval_file)]
