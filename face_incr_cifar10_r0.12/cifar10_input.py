@@ -202,11 +202,18 @@ def distorted_inputs(data_dir, batch_size):
 
   # Randomly flip the image horizontally.
   if FLAGS.random_flip:
+    if FLAGS.random_crop:
       distorted_image = tf.image.random_flip_left_right(distorted_image)
+    else:
+      distorted_image = tf.image.random_flip_left_right(reshaped_image)
 
   # Because these operations are not commutative, consider randomizing
   # the order their operation.
-  distorted_image = tf.image.random_brightness(reshaped_image,
+  if FLAGS.random_crop or FLAGS.random_flip:
+    distorted_image = tf.image.random_brightness(distorted_image,
+                                               max_delta=63)
+  else:
+    distorted_image = tf.image.random_brightness(reshaped_image,
                                                max_delta=63)
   distorted_image = tf.image.random_contrast(distorted_image,
                                              lower=0.2, upper=1.8)
