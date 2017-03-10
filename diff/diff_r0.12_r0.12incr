@@ -126,24 +126,18 @@ diff cifar10_r0.12/cifar10.py face_incr_cifar10_r0.12/cifar10.py
 >   num_batches_per_epoch = FLAGS.num_examples_per_epoch_for_train / FLAGS.batch_size
 >   decay_steps = int(num_batches_per_epoch * FLAGS.num_epochs_per_decay)
 343c347
-<   print(INITIAL_LEARNING_RATE)
----
->   print(FLAGS.initial_learning_rate)
-346,347c350,351
-<   print(LEARNING_RATE_DECAY_FACTOR)
 <   lr = tf.train.exponential_decay(INITIAL_LEARNING_RATE,
 ---
->   print(FLAGS.learning_rate_decay_factor)
 >   lr = tf.train.exponential_decay(FLAGS.initial_learning_rate,
-350c354
+346c350
 <                                   LEARNING_RATE_DECAY_FACTOR,
 ---
 >                                   FLAGS.learning_rate_decay_factor,
-352c356
+348c352
 <   tf.scalar_summary('learning_rate', lr)
 ---
 >   tf.summary.scalar('learning_rate', lr)
-360c364,382
+356c360,378
 <     grads = opt.compute_gradients(total_loss)
 ---
 >     if vars_to_not_train==None:
@@ -165,37 +159,37 @@ diff cifar10_r0.12/cifar10.py face_incr_cifar10_r0.12/cifar10.py
 >         print("Variables to train:")
 >         print(vars_to_train)
 >       grads = opt.compute_gradients(total_loss, var_list=vars_to_train)
-367c389
+363c385
 <     tf.histogram_summary(var.op.name, var)
 ---
 >     tf.summary.histogram(var.op.name, var)
-372c394
+368c390
 <       tf.histogram_summary(var.op.name + '/gradients', grad)
 ---
 >       tf.summary.histogram(var.op.name + '/gradients', grad)
-376c398
+372c394
 <       MOVING_AVERAGE_DECAY, global_step)
 ---
 >       FLAGS.moving_average_decay, global_step)
-386a409
+382a405
 >   import zipfile
-390c413
+386c409
 <   filename = DATA_URL.split('/')[-1]
 ---
 >   filename = FLAGS.data_url.split('/')[-1]
-397c420
+393c416
 <     filepath, _ = urllib.request.urlretrieve(DATA_URL, filepath, _progress)
 ---
 >     filepath, _ = urllib.request.urlretrieve(FLAGS.data_url, filepath, _progress)
-401,402c424,428
+397,398c420,424
 <   
 <   tarfile.open(filepath, 'r:gz').extractall(dest_directory)
 ---
->     if not FLAGS.zip_datafile:
->         tarfile.open(filepath, 'r:gz').extractall(dest_directory)
->     else:
->         with zipfile.ZipFile(filepath, 'r') as myzip:
->     	  myzip.extractall(dest_directory)
+>   if not FLAGS.zip_datafile:
+>     tarfile.open(filepath, 'r:gz').extractall(dest_directory)
+>   else:
+>     with zipfile.ZipFile(filepath, 'r') as myzip:
+>       myzip.extractall(dest_directory)
 Only in face_incr_cifar10_r0.12: cifar10.pyc
 diff cifar10_r0.12/cifar10_eval.py face_incr_cifar10_r0.12/cifar10_eval.py
 39a40
