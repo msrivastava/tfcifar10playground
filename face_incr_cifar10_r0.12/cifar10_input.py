@@ -236,7 +236,7 @@ def inputs(eval_data, data_dir, batch_size):
     batch_size: Number of images per batch.
 
   Returns:
-    images: Images. 4D tensor of [batch_size, IMAGE_SIZE, IMAGE_SIZE, 3] size.
+    images: Images. 4D tensor of [batch_size, FLAGS.image_size, FLAGS.image_size, 3] size.
     labels: Labels. 1D tensor of [batch_size] size.
   """
   if not eval_data:
@@ -258,8 +258,8 @@ def inputs(eval_data, data_dir, batch_size):
   read_input = read_cifar10(filename_queue)
   reshaped_image = tf.cast(read_input.uint8image, tf.float32)
 
-  height = IMAGE_SIZE
-  width = IMAGE_SIZE
+  height = FLAGS.image_size
+  width = FLAGS.image_size
 
   # Image processing for evaluation.
   # Crop the central [height, width] of the image.

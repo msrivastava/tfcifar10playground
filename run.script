@@ -23,4 +23,6 @@ export PYTHONPATH=mcifar10 ; python -m mcifar10.cifar10_train \
 --learning_rate_decay_factor 0.1 \
 --num_epochs_per_decay 350.0 \
 --moving_average_decay 0.9999 \
+--max_steps 1000000 \
+--debug \
 --train_dir /tmp/cifar10_train
