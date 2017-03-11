@@ -99,7 +99,7 @@ def train(retrain=False,retrain_count=1):
     ### RETRAINING START
 
     if FLAGS.retrain:
-      if False:
+      if Flags.debug:
         print("GLOBAL =============================================================================")
         for v in tf.global_variables(): print(v.name)
         print("TRAINABLE =============================================================================")
@@ -114,7 +114,7 @@ def train(retrain=False,retrain_count=1):
       else:
         variables_to_restore = [v for v in tf.global_variables() if v.name[0:14]!="softmax_linear" and v.name[0:6]!="local4"]
         variables_to_initialize = [v for v in tf.global_variables() if v.name[0:14]=="softmax_linear" or v.name[0:6]=="local4"]
-      if False:
+      if Flags.debug:
         print("RESTORE =============================================================================")
         for v in variables_to_restore: print(v.name)
         print("INITIALIZE =============================================================================")
@@ -125,7 +125,10 @@ def train(retrain=False,retrain_count=1):
         print('Yikes! No checkpoint file found at %s to retrain :-('%(FLAGS.checkpoint_dir))
         return
       # Build an initialization operation to run below.
-      init = tf.initialize_all_variables([v for v in tf.global_variables() if v.name[0:14]=="softmax_linear"])
+      if FLAGS.retrain_count==1:
+        init = tf.variables_initializer([v for v in tf.global_variables() if v.name[0:14]=="softmax_linear"])
+      else:
+        init = tf.variables_initializer([v for v in tf.global_variables() if v.name[0:14]=="softmax_linear" or v.name[0:6]=="local4"])
     else:
       # Build an initialization operation to run below.
       init = tf.initialize_all_variables()

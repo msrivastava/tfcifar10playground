@@ -125,7 +125,10 @@ def train(retrain=False,retrain_count=1):
         print('Yikes! No checkpoint file found at %s to retrain :-('%(FLAGS.checkpoint_dir))
         return
       # Build an initialization operation to run below.
-      init = tf.variables_initializer([v for v in tf.global_variables() if v.name[0:14]=="softmax_linear"])
+      if FLAGS.retrain_count==1:
+        init = tf.variables_initializer([v for v in tf.global_variables() if v.name[0:14]=="softmax_linear"])
+      else:
+        init = tf.variables_initializer([v for v in tf.global_variables() if v.name[0:14]=="softmax_linear" or v.name[0:6]=="local4"])
     else:
       # Build an initialization operation to run below.
       init = tf.global_variables_initializer()

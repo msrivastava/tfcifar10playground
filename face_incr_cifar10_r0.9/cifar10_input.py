@@ -58,8 +58,8 @@ tf.app.flags.DEFINE_integer('num_examples_per_epoch_for_train', 1212,
                             """Number of examples per epoch for training.""")
 tf.app.flags.DEFINE_integer('num_examples_per_epoch_for_eval', 303,
                             """Number of examples per epoch for evaluation.""")
-tf.app.flags.DEFINE_integer('num_batches', 2,
-                            """Number of classes.""")
+#tf.app.flags.DEFINE_integer('num_batches', 2,
+#                            """Number of batches.""")
 tf.app.flags.DEFINE_integer('label_bytes', 1,
                             """Number of bytes in label.""") # 2 for CIFAR-100
 tf.app.flags.DEFINE_boolean('random_crop', False,
