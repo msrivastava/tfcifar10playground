@@ -43,7 +43,7 @@ export PYTHONPATH=mcifar10 ; python -m mcifar10.cifar10_train \
 --num_train_files 1 \
 --eval_file test_4pos.bin \
 --data_dir /tmp/mcifar10_data \
---checkpoint_dir ../data/cifar10_data \
+--checkpoint_dir ../cifar10_train \
 --image_size 24 \
 --input_image_height 24 \
 --input_image_width 24 \

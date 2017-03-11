@@ -126,9 +126,9 @@ def train(retrain=False,retrain_count=1):
         return
       # Build an initialization operation to run below.
       if FLAGS.retrain_count==1:
-        init = tf.variables_initializer([v for v in tf.all_variables() if v.name[0:14]=="softmax_linear"])
+        init = tf.initialize_variables([v for v in tf.all_variables() if v.name[0:14]=="softmax_linear"])
       else:
-        init = tf.variables_initializer([v for v in tf.all_variables() if v.name[0:14]=="softmax_linear" or v.name[0:6]=="local4"])
+        init = tf.initialize_variables([v for v in tf.all_variables() if v.name[0:14]=="softmax_linear" or v.name[0:6]=="local4"])
     else:
       # Build an initialization operation to run below.
       init = tf.initialize_all_variables()
