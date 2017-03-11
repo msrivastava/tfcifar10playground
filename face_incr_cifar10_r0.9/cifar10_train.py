@@ -101,7 +101,7 @@ def train(retrain=False,retrain_count=1):
     if FLAGS.retrain:
       if FLAGS.debug:
         print("GLOBAL =============================================================================")
-        for v in tf.global_variables(): print(v.name)
+        for v in tf.all_variables(): print(v.name)
         print("TRAINABLE =============================================================================")
         for v in tf.trainable_variables(): print(v.name)
         print("MOVING AVERAGES =============================================================================")
@@ -109,11 +109,11 @@ def train(retrain=False,retrain_count=1):
       variable_averages = tf.train.ExponentialMovingAverage(FLAGS.moving_average_decay)
       variables_to_restore = variable_averages.variables_to_restore()
       if FLAGS.retrain_count==1:
-        variables_to_restore = [v for v in tf.global_variables() if v.name[0:14]!="softmax_linear"]
-        variables_to_initialize = [v for v in tf.global_variables() if v.name[0:14]=="softmax_linear"]
+        variables_to_restore = [v for v in tf.all_variables() if v.name[0:14]!="softmax_linear"]
+        variables_to_initialize = [v for v in tf.all_variables() if v.name[0:14]=="softmax_linear"]
       else:
-        variables_to_restore = [v for v in tf.global_variables() if v.name[0:14]!="softmax_linear" and v.name[0:6]!="local4"]
-        variables_to_initialize = [v for v in tf.global_variables() if v.name[0:14]=="softmax_linear" or v.name[0:6]=="local4"]
+        variables_to_restore = [v for v in tf.all_variables() if v.name[0:14]!="softmax_linear" and v.name[0:6]!="local4"]
+        variables_to_initialize = [v for v in tf.all_variables() if v.name[0:14]=="softmax_linear" or v.name[0:6]=="local4"]
       if FLAGS.debug:
         print("RESTORE =============================================================================")
         for v in variables_to_restore: print(v.name)
@@ -126,9 +126,9 @@ def train(retrain=False,retrain_count=1):
         return
       # Build an initialization operation to run below.
       if FLAGS.retrain_count==1:
-        init = tf.variables_initializer([v for v in tf.global_variables() if v.name[0:14]=="softmax_linear"])
+        init = tf.variables_initializer([v for v in tf.all_variables() if v.name[0:14]=="softmax_linear"])
       else:
-        init = tf.variables_initializer([v for v in tf.global_variables() if v.name[0:14]=="softmax_linear" or v.name[0:6]=="local4"])
+        init = tf.variables_initializer([v for v in tf.all_variables() if v.name[0:14]=="softmax_linear" or v.name[0:6]=="local4"])
     else:
       # Build an initialization operation to run below.
       init = tf.initialize_all_variables()
