@@ -401,7 +401,7 @@ def maybe_download_and_extract():
     print()
     statinfo = os.stat(filepath)
     print('Successfully downloaded', filename, statinfo.st_size, 'bytes.')
-  if not FLAGS.zip_datafile::
+  if not FLAGS.zip_datafile:
     tarfile.open(filepath, 'r:gz').extractall(dest_directory)
   else:
     with zipfile.ZipFile(filepath, 'r') as myzip:
