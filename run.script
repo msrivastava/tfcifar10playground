@@ -36,12 +36,12 @@ export PYTHONPATH=mcifar10 ; python -m mcifar10.cifar10_train \
 --custom_overrides True \
 --retrain True \
 --retrain_count 1 \
---data_url https://dl.dropbox.com/s/u1dn6z5j8u79w71/Classification_All_Blur_140v1.zip \
+--data_url https://dl.dropbox.com/s/csavffd52et4l0l/RETRAIN_5pos_24x24.zip \
 --data_file_root RETRAIN_5pos_24x24 \
 --zip_datafile True \
---train_file all_train.bin \
---num_train_files 1\
---eval_file all_test13.bin \
+--train_file train.bin \
+--num_train_files 1 \
+--eval_file test_4pos.bin \
 --data_dir /tmp/mcifar10_data \
 --checkpoint_dir ../data/cifar10_data \
 --image_size 24 \

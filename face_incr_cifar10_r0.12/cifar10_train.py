@@ -99,7 +99,7 @@ def train(retrain=False,retrain_count=1):
     ### RETRAINING START
 
     if FLAGS.retrain:
-      if Flags.debug:
+      if FLAGS.debug:
         print("GLOBAL =============================================================================")
         for v in tf.global_variables(): print(v.name)
         print("TRAINABLE =============================================================================")
@@ -114,7 +114,7 @@ def train(retrain=False,retrain_count=1):
       else:
         variables_to_restore = [v for v in tf.global_variables() if v.name[0:14]!="softmax_linear" and v.name[0:6]!="local4"]
         variables_to_initialize = [v for v in tf.global_variables() if v.name[0:14]=="softmax_linear" or v.name[0:6]=="local4"]
-      if Flags.debug:
+      if FLAGS.debug:
         print("RESTORE =============================================================================")
         for v in variables_to_restore: print(v.name)
         print("INITIALIZE =============================================================================")
