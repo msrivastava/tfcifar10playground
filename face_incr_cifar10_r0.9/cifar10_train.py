@@ -173,7 +173,7 @@ def train(retrain=False,retrain_count=1):
                       'sec/batch)')
         print (format_str % (datetime.now(), step, loss_value,
                              examples_per_sec, sec_per_batch))
-      if False and FLAGS.debug:
+      if FLAGS.debug:
           print (tf.global_variables()[2].name)
           print (tf.global_variables()[2].eval(session=sess))
           print (tf.global_variables()[9].name)
