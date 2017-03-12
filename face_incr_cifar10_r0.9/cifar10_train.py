@@ -106,8 +106,8 @@ def train(retrain=False,retrain_count=1):
         for v in tf.trainable_variables(): print(v.name)
         print("MOVING AVERAGES =============================================================================")
         for v in tf.moving_average_variables(): print(v.name)
-      variable_averages = tf.train.ExponentialMovingAverage(FLAGS.moving_average_decay)
-      variables_to_restore = variable_averages.variables_to_restore()
+      #variable_averages = tf.train.ExponentialMovingAverage(FLAGS.moving_average_decay)
+      #variables_to_restore = variable_averages.variables_to_restore()
       if FLAGS.retrain_count==1:
         variables_to_restore = [v for v in tf.all_variables() if v.name[0:14]!="softmax_linear"]
         variables_to_initialize = [v for v in tf.all_variables() if v.name[0:14]=="softmax_linear"]
@@ -147,6 +147,15 @@ def train(retrain=False,retrain_count=1):
     tf.train.start_queue_runners(sess=sess)
 
     summary_writer = tf.train.SummaryWriter(FLAGS.train_dir, sess.graph)
+
+    if False and FLAGS.debug:
+      print (tf.global_variables()[2].name)
+      print (tf.global_variables()[2].eval(session=sess))
+      print (tf.global_variables()[9].name)
+      print (tf.global_variables()[9].eval(session=sess))
+      print (tf.global_variables()[10].name)
+      print (tf.global_variables()[10].eval(session=sess))
+      print ("-------------------------------------------")
 
     for step in xrange(FLAGS.max_steps):
       start_time = time.time()

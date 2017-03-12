@@ -306,7 +306,7 @@ def _add_loss_summaries(total_loss):
   return loss_averages_op
 
 
-def train(total_loss, global_step, vars_to_not_train=None):
+def train(total_loss, global_step, layers_to_train=None):
   """Train CIFAR-10 model.
 
   Create an optimizer and apply to all trainable variables. Add moving
@@ -337,28 +337,26 @@ def train(total_loss, global_step, vars_to_not_train=None):
   # Compute gradients.
   with tf.control_dependencies([loss_averages_op]):
     opt = tf.train.GradientDescentOptimizer(lr)
-    grads = opt.compute_gradients(total_loss)
-  # Compute gradients.
-  with tf.control_dependencies([loss_averages_op]):
-    opt = tf.train.GradientDescentOptimizer(lr)
-    if vars_to_not_train==None:
+    if layers_to_train==None:
       grads = opt.compute_gradients(total_loss)
-    else:
-      if FLAGS.debug:
-        print("Variables to not train:")
-        print(vars_to_not_train)
+    else:        
+      vars_to_not_train = []
       vars_to_train = []
       for v in tf.trainable_variables():
-        include_variable = True
-        for w in vars_to_not_train:
-          if v.name.startswith(w)==True:
-            include_variable = False
+        variable_is_trainable = False
+        for w in layers_to_train:
+          if v.name.startswith(w+'/')==True:
+            variable_is_trainable = True
             break
-        if include_variable:
+        if variable_is_trainable:
           vars_to_train.append(v)
+        else:
+          vars_to_not_train.append(v)
       if FLAGS.debug:
-        print("Variables to train:")
-        print(vars_to_train)
+        print("TRAINABLE Variables to train  ===================================================")
+        for v in vars_to_train: print(v.name)
+        print("TRAINABLE Variables to not train: ===================================================")
+        for v in vars_to_not_train: print(v.name)
       grads = opt.compute_gradients(total_loss, var_list=vars_to_train)
 
   # Apply gradients.

@@ -106,8 +106,9 @@ def train(retrain=False,retrain_count=1):
         for v in tf.trainable_variables(): print(v.name)
         print("MOVING AVERAGES =============================================================================")
         for v in tf.moving_average_variables(): print(v.name)
-      variable_averages = tf.train.ExponentialMovingAverage(FLAGS.moving_average_decay)
-      variables_to_restore = variable_averages.variables_to_restore()
+        pass
+      #variable_averages = tf.train.ExponentialMovingAverage(FLAGS.moving_average_decay)
+      #variables_to_restore = variable_averages.variables_to_restore()
       if FLAGS.retrain_count==1:
         variables_to_restore = [v for v in tf.global_variables() if v.name[0:14]!="softmax_linear"]
         variables_to_initialize = [v for v in tf.global_variables() if v.name[0:14]=="softmax_linear"]
@@ -119,6 +120,7 @@ def train(retrain=False,retrain_count=1):
         for v in variables_to_restore: print(v.name)
         print("INITIALIZE =============================================================================")
         for v in variables_to_initialize: print(v.name)
+        pass
       saver_retrain = tf.train.Saver(variables_to_restore)
       ckpt = tf.train.get_checkpoint_state(FLAGS.checkpoint_dir)
       if not (ckpt and ckpt.model_checkpoint_path):
@@ -148,6 +150,15 @@ def train(retrain=False,retrain_count=1):
 
     summary_writer = tf.summary.FileWriter(FLAGS.train_dir, sess.graph)
 
+    if False and FLAGS.debug:
+      print (tf.global_variables()[2].name)
+      print (tf.global_variables()[2].eval(session=sess))
+      print (tf.global_variables()[9].name)
+      print (tf.global_variables()[9].eval(session=sess))
+      print (tf.global_variables()[10].name)
+      print (tf.global_variables()[10].eval(session=sess))
+      print ("-------------------------------------------")
+
     for step in xrange(FLAGS.max_steps):
       start_time = time.time()
       _, loss_value = sess.run([train_op, loss])
@@ -164,7 +175,14 @@ def train(retrain=False,retrain_count=1):
                       'sec/batch)')
         print (format_str % (datetime.now(), step, loss_value,
                              examples_per_sec, sec_per_batch))
-
+        if False and FLAGS.debug:
+          print (tf.global_variables()[2].name)
+          print (tf.global_variables()[2].eval(session=sess))
+          print (tf.global_variables()[9].name)
+          print (tf.global_variables()[9].eval(session=sess))
+          print (tf.global_variables()[10].name)
+          print (tf.global_variables()[10].eval(session=sess))
+          print ("-------------------------------------------")
       if step % 100 == 0:
         summary_str = sess.run(summary_op)
         summary_writer.add_summary(summary_str, step)
