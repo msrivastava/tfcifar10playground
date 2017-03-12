@@ -148,13 +148,13 @@ def train(retrain=False,retrain_count=1):
 
     summary_writer = tf.train.SummaryWriter(FLAGS.train_dir, sess.graph)
 
-    if False and FLAGS.debug:
-      print (tf.global_variables()[2].name)
-      print (tf.global_variables()[2].eval(session=sess))
-      print (tf.global_variables()[9].name)
-      print (tf.global_variables()[9].eval(session=sess))
-      print (tf.global_variables()[10].name)
-      print (tf.global_variables()[10].eval(session=sess))
+    if FLAGS.debug:
+      print (tf.all_variables()[2].name)
+      print (tf.all_variables()[2].eval(session=sess))
+      print (tf.all_variables()[9].name)
+      print (tf.all_variables()[9].eval(session=sess))
+      print (tf.all_variables()[10].name)
+      print (tf.all_variables()[10].eval(session=sess))
       print ("-------------------------------------------")
 
     for step in xrange(FLAGS.max_steps):
