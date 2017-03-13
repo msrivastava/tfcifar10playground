@@ -106,7 +106,6 @@ def train(retrain=False,retrain_count=1):
         for v in tf.trainable_variables(): print(v.name)
         print("MOVING AVERAGES =============================================================================")
         for v in tf.moving_average_variables(): print(v.name)
-        pass
       #variable_averages = tf.train.ExponentialMovingAverage(FLAGS.moving_average_decay)
       #variables_to_restore = variable_averages.variables_to_restore()
       if FLAGS.retrain_count==1:
@@ -120,7 +119,6 @@ def train(retrain=False,retrain_count=1):
         for v in variables_to_restore: print(v.name)
         print("INITIALIZE =============================================================================")
         for v in variables_to_initialize: print(v.name)
-        pass
       saver_retrain = tf.train.Saver(variables_to_restore)
       ckpt = tf.train.get_checkpoint_state(FLAGS.checkpoint_dir)
       if not (ckpt and ckpt.model_checkpoint_path):
