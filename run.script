@@ -194,7 +194,7 @@ export PYTHONPATH=mcifar10 ; python -m mcifar10.cifar10_eval \
 --data_url https://dl.dropbox.com/s/csavffd52et4l0l/RETRAIN_5pos_24x24.zip \
 --data_file_root RETRAIN_5pos_24x24 \
 --data_dir ../tfdata/mcifar10_5pos_data \
---checkpoint_dir ../tfdata/mcifar10_5pos_train \
+--checkpoint_dir ../tfdata/mcifar10_5pos_retrain \
 --eval_data test \
 --eval_file test_5pos.bin \
 --custom_overrides True \
@@ -224,7 +224,7 @@ export PYTHONPATH=mcifar10 ; python -m mcifar10.cifar10_eval \
 --data_url https://dl.dropbox.com/s/q8o256v3ld98ajv/RETRAIN_5size_24x24.zip \
 --data_file_root RETRAIN_5size_24x24 \
 --data_dir ../tfdata/mcifar10_5size_data \
---checkpoint_dir ../tfdata/mcifar10_5size_train \
+--checkpoint_dir ../tfdata/mcifar10_5size_retrain \
 --eval_data test \
 --eval_file test_5size.bin \
 --custom_overrides True \
@@ -254,7 +254,7 @@ export PYTHONPATH=mcifar10 ; python -m mcifar10.cifar10_eval \
 --data_url https://dl.dropbox.com/s/nipxv5xkbqzt1mk/RETRAIN_randpos_24x24.zip \
 --data_file_root RETRAIN_randpos_24x24 \
 --data_dir ../tfdata/mcifar10_randpos_data \
---checkpoint_dir ../tfdata/mcifar10_randpos_train \
+--checkpoint_dir ../tfdata/mcifar10_randpos_retrain \
 --eval_data test \
 --eval_file test_randpos.bin \
 --custom_overrides True \
@@ -284,7 +284,7 @@ export PYTHONPATH=mcifar10 ; python -m mcifar10.cifar10_eval \
 --data_url https://dl.dropbox.com/s/oz8j4j4qlximvad/RETRAIN_randsize_24x24.zip \
 --data_file_root RETRAIN_randsize_24x24 \
 --data_dir ../tfdata/mcifar10_randsize_data \
---checkpoint_dir ../tfdata/mcifar10_randsize_train \
+--checkpoint_dir ../tfdata/mcifar10_randsize_retrain \
 --eval_data test \
 --eval_file test_randsize.bin \
 --custom_overrides True \
