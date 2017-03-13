@@ -42,7 +42,7 @@ import sys
 import numpy as np
 import tensorflow as tf
 
-from mcifar10 import cifar10
+from mcifar10 import cifar10, cifar10_input
 
 FLAGS = tf.app.flags.FLAGS
 
