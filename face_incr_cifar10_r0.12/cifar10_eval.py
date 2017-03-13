@@ -182,8 +182,8 @@ def eval_once(saver, summary_writer, top_k_op, summary_op, logits, labels, new_t
 	        else:
 	        	new_incorrect_predicts_for_each_label[predict_class] += 1
         step += 1
-        print(step)
-        print(coord.should_stop())
+        #print(step)
+        #print(coord.should_stop())
       #print(new_predicts_for_each_label)
       #print(new_correct_predicts_for_each_label)
       print("Megha's Precision: ")
