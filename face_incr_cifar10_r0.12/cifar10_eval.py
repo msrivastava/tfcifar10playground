@@ -91,7 +91,7 @@ def calculate_recall(correct_predictions, needed_predictions):
 			sum_avg += (correct_predictions[i]/needed_predictions[i])
 			hits += correct_predictions[i]
 			misses += (needed_predictions[i]-correct_predictions[i])
-			print("Index: "+str(i)+" Hits: "+str(hits)+" Misses: "+str(misses)+" ")
+			#print("Index: "+str(i)+" Hits: "+str(hits)+" Misses: "+str(misses)+" ")
 			amount += 1
 	if(amount == 0):
 		return 0
