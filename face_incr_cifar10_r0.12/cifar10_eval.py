@@ -110,7 +110,7 @@ def calculate_false_positives(incorrect_predictions, needed_predictions):
 			if(i != class_index):
 				negative_amt += needed_predictions[i]
 		if (incorrect_predictions[class_index] == 0):
-			print("Index: "+str(class_index)+" False Positives: 0 Correct Rejects: "+str(negative_amt)+" ")
+			#print("Index: "+str(class_index)+" False Positives: 0 Correct Rejects: "+str(negative_amt)+" ")
 			sum_avg += 0
 			amount += 1
 		else:
@@ -120,7 +120,7 @@ def calculate_false_positives(incorrect_predictions, needed_predictions):
 			correct_rejects += (negative_amt - incorrect_predictions[class_index])
 			#print(incorrect_predictions[class_index])
 			#print(negative_amt)
-			print("Index: "+str(class_index)+" False Positives: "+str(false_positives)+" Correct Rejects: "+str(correct_rejects))
+			#print("Index: "+str(class_index)+" False Positives: "+str(false_positives)+" Correct Rejects: "+str(correct_rejects))
 			amount += 1
 	if(amount == 0):
 		return 0
