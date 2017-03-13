@@ -27,6 +27,10 @@ import tensorflow as tf
 
 FLAGS = tf.app.flags.FLAGS
 
+NUM_CLASSES = 101
+NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 1212
+NUM_EXAMPLES_PER_EPOCH_FOR_EVAL = 303
+
 # DATA SET CONFIGURATION
 
 # Process images of this size. Note that this differs from the original CIFAR
