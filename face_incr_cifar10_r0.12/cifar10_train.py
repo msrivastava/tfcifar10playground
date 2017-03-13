@@ -63,7 +63,8 @@ tf.app.flags.DEFINE_boolean('retrain', False,
                             """Whether to retrain.""")
 tf.app.flags.DEFINE_integer('retrain_count', 1,
                             """Numer of final layers to retrains [1 or 2].""")
-
+tf.app.flags.DEFINE_boolean('print_params', False,
+                            """Print values of parameters during training.""")
 
 def train(retrain=False,retrain_count=1):
   """Train CIFAR-10 for a number of steps."""
@@ -148,7 +149,7 @@ def train(retrain=False,retrain_count=1):
 
     summary_writer = tf.summary.FileWriter(FLAGS.train_dir, sess.graph)
 
-    if False and FLAGS.debug:
+    if FLAGS.print_params:
       print (tf.global_variables()[2].name)
       print (tf.global_variables()[2].eval(session=sess))
       print (tf.global_variables()[9].name)
@@ -173,7 +174,7 @@ def train(retrain=False,retrain_count=1):
                       'sec/batch)')
         print (format_str % (datetime.now(), step, loss_value,
                              examples_per_sec, sec_per_batch))
-        if False and FLAGS.debug:
+        if FLAGS.print_params:
           print (tf.global_variables()[2].name)
           print (tf.global_variables()[2].eval(session=sess))
           print (tf.global_variables()[9].name)
