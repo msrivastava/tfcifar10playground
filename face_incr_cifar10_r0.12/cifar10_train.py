@@ -61,12 +61,12 @@ tf.app.flags.DEFINE_boolean('log_device_placement', False,
                             """Whether to log device placement.""")
 tf.app.flags.DEFINE_boolean('retrain', False,
                             """Whether to retrain.""")
-tf.app.flags.DEFINE_integer('retrain_count', 1,
-                            """Numer of final layers to retrains [1 or 2].""")
+tf.app.flags.DEFINE_string('retrain_list', '',
+                            """Names of layers to retraing.""")
 tf.app.flags.DEFINE_boolean('print_params', False,
                             """Print values of parameters during training.""")
 
-def train(retrain=False,retrain_count=1):
+def train(retrain=False,retrain_list=None):
   """Train CIFAR-10 for a number of steps."""
   with tf.Graph().as_default():
     global_step = tf.Variable(0, trainable=False)
@@ -86,10 +86,7 @@ def train(retrain=False,retrain_count=1):
     if not retrain:
       train_op = cifar10.train(loss, global_step)
     else:
-      if retrain_count==1:
-        train_op = cifar10.train(loss, global_step, ["softmax_linear"])
-      else:
-        train_op = cifar10.train(loss, global_step, ["softmax_linear", "local4"])
+      train_op = cifar10.train(loss, global_step, retrain_list)
 
     # Create a saver.
     saver = tf.train.Saver(tf.global_variables())
@@ -107,14 +104,8 @@ def train(retrain=False,retrain_count=1):
         for v in tf.trainable_variables(): print(v.name)
         print("MOVING AVERAGES =============================================================================")
         for v in tf.moving_average_variables(): print(v.name)
-      #variable_averages = tf.train.ExponentialMovingAverage(FLAGS.moving_average_decay)
-      #variables_to_restore = variable_averages.variables_to_restore()
-      if FLAGS.retrain_count==1:
-        variables_to_restore = [v for v in tf.global_variables() if v.name[0:14]!="softmax_linear"]
-        variables_to_initialize = [v for v in tf.global_variables() if v.name[0:14]=="softmax_linear"]
-      else:
-        variables_to_restore = [v for v in tf.global_variables() if v.name[0:14]!="softmax_linear" and v.name[0:6]!="local4"]
-        variables_to_initialize = [v for v in tf.global_variables() if v.name[0:14]=="softmax_linear" or v.name[0:6]=="local4"]
+      variables_to_restore = [v for v in tf.global_variables() if not v.name.split('/')[0] in retrain_list]
+      variables_to_initialize = [v for v in tf.global_variables() if v.name.split('/')[0] in retrain_list]
       if FLAGS.debug:
         print("RESTORE =============================================================================")
         for v in variables_to_restore: print(v.name)
@@ -126,10 +117,7 @@ def train(retrain=False,retrain_count=1):
         print('Yikes! No checkpoint file found at %s to retrain :-('%(FLAGS.checkpoint_dir))
         return
       # Build an initialization operation to run below.
-      if FLAGS.retrain_count==1:
-        init = tf.variables_initializer([v for v in tf.global_variables() if v.name[0:14]=="softmax_linear"])
-      else:
-        init = tf.variables_initializer([v for v in tf.global_variables() if v.name[0:14]=="softmax_linear" or v.name[0:6]=="local4"])
+      init = tf.variables_initializer(variables_to_initialize)
     else:
       # Build an initialization operation to run below.
       init = tf.global_variables_initializer()
@@ -149,6 +137,8 @@ def train(retrain=False,retrain_count=1):
 
     summary_writer = tf.summary.FileWriter(FLAGS.train_dir, sess.graph)
 
+    #print((tf.global_variables()[9].name,tf.global_variables()[9].eval(session=sess)[0][0]))
+    #print((tf.global_variables()[10].name,tf.global_variables()[10].eval(session=sess)[0]))
     if FLAGS.print_params:
       print (tf.global_variables()[2].name)
       print (tf.global_variables()[2].eval(session=sess))
@@ -174,6 +164,8 @@ def train(retrain=False,retrain_count=1):
                       'sec/batch)')
         print (format_str % (datetime.now(), step, loss_value,
                              examples_per_sec, sec_per_batch))
+        #print((tf.global_variables()[9].name,tf.global_variables()[9].eval(session=sess)[0][0]))
+        #print((tf.global_variables()[10].name,tf.global_variables()[10].eval(session=sess)[0]))
         if FLAGS.print_params:
           print (tf.global_variables()[2].name)
           print (tf.global_variables()[2].eval(session=sess))
@@ -193,15 +185,18 @@ def train(retrain=False,retrain_count=1):
 
 def main(argv=None):  # pylint: disable=unused-argument
   cifar10.maybe_download_and_extract()
-  if FLAGS.retrain_count!=1: FLAGS.retrain_count=2
   if FLAGS.retrain:
-    print ("Will only retrain the final %d layer(s)."%(FLAGS.retrain_count))
+    if FLAGS.retrain_list == '':
+      FLAGS.retrain_list = ['softmax_linear']
+    else:
+      FLAGS.retrain_list = set(FLAGS.retrain_list.split(' ')+['softmax_linear'])
+    print ("Will only retrain following layer(s): %s."%(' '.join(FLAGS.retrain_list)))
     if FLAGS.train_dir[-5:]=='train' and FLAGS.train_dir[-7:]!='train':
       FLAGS.train_dir=FLAGS.train_dir[0:-5]+'retrain'
     if tf.gfile.Exists(FLAGS.train_dir):
       tf.gfile.DeleteRecursively(FLAGS.train_dir)
     tf.gfile.MakeDirs(FLAGS.train_dir)
-    train(True,FLAGS.retrain_count)
+    train(True,FLAGS.retrain_list)
   else:
     print ("Will train from scratch")
     if tf.gfile.Exists(FLAGS.train_dir):

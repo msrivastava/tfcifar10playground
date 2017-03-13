@@ -380,6 +380,7 @@ def train(total_loss, global_step, layers_to_train=None):
       grads = opt.compute_gradients(total_loss, var_list=vars_to_train)
 
   # Apply gradients.
+  if FLAGS.debug: print("GRADIENTS: ",([(v.name, g.name) for g,v in grads]))
   apply_gradient_op = opt.apply_gradients(grads, global_step=global_step)
 
   # Add histograms for trainable variables.
