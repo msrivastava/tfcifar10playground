@@ -98,8 +98,8 @@ def calculate_recall(correct_predictions, needed_predictions):
 	return sum_avg/amount
 
 def calculate_false_positives(incorrect_predictions, needed_predictions):
-	if (len(incorrect_predictions) == len(needed_predictions)):
-		print("Yay! LENGHTS MATCH")
+	#if (len(incorrect_predictions) == len(needed_predictions)):
+	#	print("Yay! LENGHTS MATCH")
 	sum_avg = 0
 	amount = 0
 	for class_index in range(len(incorrect_predictions)):
@@ -186,12 +186,9 @@ def eval_once(saver, summary_writer, top_k_op, summary_op, logits, labels, new_t
         #print(coord.should_stop())
       #print(new_predicts_for_each_label)
       #print(new_correct_predicts_for_each_label)
-      print("Megha's Precision: ")
-      print(calculate_precision(new_predicts_for_each_label, new_correct_predicts_for_each_label))
-      print("Megha's Recall/ TRUE POSITIVE Rate: ")
-      print(calculate_recall(new_correct_predicts_for_each_label, new_actual_amount_per_label))
-      print("Megha's False Positive Rate: ")
-      print(calculate_false_positives(new_incorrect_predicts_for_each_label, new_actual_amount_per_label))
+      print("Megha's Precision: %f"%(calculate_precision(new_predicts_for_each_label, new_correct_predicts_for_each_label)))
+      print("Megha's Recall/ TRUE POSITIVE Rate: %f"%(calculate_recall(new_correct_predicts_for_each_label, new_actual_amount_per_label)))
+      print("Megha's False Positive Rate: %f"%(calculate_false_positives(new_incorrect_predicts_for_each_label, new_actual_amount_per_label)))
 
       # Compute precision @ 1.
       #print(logits[0,:].eval())
